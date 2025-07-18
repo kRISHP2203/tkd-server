@@ -68,12 +68,15 @@ export default function TapScoreHubPage() {
 
   useEffect(() => {
     import('tone').then(Tone => {
-      synth.current = new Tone.Synth().toDestination();
+      if (Tone && Tone.Synth) {
+        synth.current = new Tone.Synth().toDestination();
+      }
     });
   }, []);
 
   const playSound = useCallback((note: string) => {
     if (synth.current && synth.current.context.state === 'running') {
+      // Stop any previous sound before starting a new one to avoid overlapping notes error.
       synth.current.triggerRelease();
       synth.current.triggerAttackRelease(note, '8n');
     }
@@ -123,21 +126,21 @@ export default function TapScoreHubPage() {
         setBlueScore(s => Math.max(0, s + points));
       }
     } else if (type === 'penalty') {
-      // 'team' is the team that receives the point, so the other team gets the penalty
+      // 'team' is the team that receives the point/whose opponent gets the penalty
       if (team === 'red') { // Blue team gets penalty
         setBluePenalties(p => {
-            const newPenalties = p + 1;
+            const newPenalties = Math.max(0, p + points);
             if(newPenalties >= settings.maxGamJeom) handleEndMatch('Hong (Red)');
             return newPenalties;
         });
-        setRedScore(s => s + points);
+        setRedScore(s => Math.max(0, s + points));
       } else { // Red team gets penalty
         setRedPenalties(p => {
-            const newPenalties = p + 1;
+            const newPenalties = Math.max(0, p + points);
             if (newPenalties >= settings.maxGamJeom) handleEndMatch('Chong (Blue)');
             return newPenalties;
         });
-        setBlueScore(s => s + points);
+        setBlueScore(s => Math.max(0, s + points));
       }
     }
 

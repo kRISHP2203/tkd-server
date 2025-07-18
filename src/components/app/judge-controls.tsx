@@ -10,12 +10,23 @@ interface JudgeControlsProps {
   onOpenSettings: () => void;
 }
 
-const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
+const ActionButton = ({ team, points, onAction, children, type = 'score' }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode, type?: 'score' | 'penalty' }) => (
     <Button
       size="sm"
       variant={team === 'red' ? 'destructive' : 'default'}
       className="flex-1"
-      onClick={() => onAction(team, points, 'score')}
+      onClick={() => onAction(team, points, type)}
+    >
+      {children}
+    </Button>
+  );
+
+  const PenaltyButton = ({ team, points, onAction, children }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
+    <Button
+      size="sm"
+      variant="outline"
+      className="flex-1"
+      onClick={() => onAction(team, points, 'penalty')}
     >
       {children}
     </Button>
@@ -41,7 +52,11 @@ export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }
                 <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
             </div>
             <Separator orientation="vertical" className="h-6" />
-            <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>gam-jeom</Button>
+            <div className="flex items-center gap-1">
+                <span className='text-sm font-medium mr-1'>Gam-jeom</span>
+                <PenaltyButton team="blue" points={1} onAction={onAction}>+1</PenaltyButton>
+                <PenaltyButton team="blue" points={-1} onAction={onAction}>-1</PenaltyButton>
+            </div>
         </div>
 
         {/* Blue Team Controls */}
@@ -52,7 +67,11 @@ export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }
                 <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
             </div>
             <Separator orientation="vertical" className="h-6" />
-            <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
+             <div className="flex items-center gap-1">
+                <span className='text-sm font-medium mr-1'>Gam-jeom</span>
+                <PenaltyButton team="red" points={1} onAction={onAction}>+1</PenaltyButton>
+                <PenaltyButton team="red" points={-1} onAction={onAction}>-1</PenaltyButton>
+            </div>
         </div>
 
         <Button variant="outline" size="sm" onClick={onOpenSettings}>
