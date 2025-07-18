@@ -32,6 +32,9 @@ export default function TimerControl({
         <div className="font-headline font-bold text-5xl text-foreground/90 tabular-nums">
           {formatTime(timeRemaining)}
         </div>
+        <CardDescription className="text-base">
+          {currentRound} ({totalRounds})
+        </CardDescription>
         <div className="flex justify-center gap-1 w-full">
           <Button
             size="icon"
@@ -41,9 +44,6 @@ export default function TimerControl({
             {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
         </div>
-        <CardDescription className="text-base">
-          {currentRound} ({totalRounds})
-        </CardDescription>
       </CardContent>
     </Card>
   );
