@@ -10,9 +10,6 @@ import { useToast } from "@/hooks/use-toast"
 import ScorePanel from '@/components/app/score-panel';
 import TimerControl from '@/components/app/timer-control';
 import JudgeControls from '@/components/app/judge-controls';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Settings } from 'lucide-react';
 import type { GameSettings } from '@/components/app/game-options-dialog';
 import GameOptionsDialog from '@/components/app/game-options-dialog';
 
@@ -207,12 +204,11 @@ export default function TapScoreHubPage() {
               description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
           });
           const timer = setTimeout(() => {
-            setMatchState('running');
-            setIsTimerRunning(true);
+            handleTimerToggle();
           }, settings.restTime * 1000);
           return () => clearTimeout(timer);
       }
-  }, [matchState, currentRound, settings.restTime, toast]);
+  }, [matchState, currentRound, settings.restTime, toast, handleTimerToggle]);
 
   useEffect(() => {
     if (!isTimerRunning || matchState !== 'running') {
@@ -240,16 +236,6 @@ export default function TapScoreHubPage() {
     <>
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         
-        {matchState !== 'running' && (
-          <div className="absolute top-4 right-4 z-10">
-            <Link href="/settings" passHref>
-              <Button variant="outline" size="icon" aria-label="App Settings">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        )}
-
         <main className="flex-grow flex flex-col md:flex-row relative">
           <ScorePanel team="red" score={redScore} penalties={redPenalties} />
           <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} />
