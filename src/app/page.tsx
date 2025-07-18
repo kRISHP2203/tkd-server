@@ -69,6 +69,7 @@ export default function TapScoreHubPage() {
     if (matchState === 'idle') {
       setTimeRemaining(newSettings.roundTime);
     }
+    setIsOptionsDialogOpen(false);
   };
 
 
@@ -82,6 +83,7 @@ export default function TapScoreHubPage() {
 
   const playSound = useCallback((note: string) => {
     if (synth.current && synth.current.context.state === 'running') {
+      // Ensure the audio context is ready and stop any previous note to prevent errors.
       synth.current.triggerRelease();
       synth.current.triggerAttackRelease(note, '8n');
     }
@@ -91,13 +93,15 @@ export default function TapScoreHubPage() {
     setIsTimerRunning(prev => {
       const newIsRunning = !prev;
       if (newIsRunning) {
-        setMatchState('running');
+        if (matchState === 'idle' || matchState === 'paused' || matchState === 'between_rounds') {
+          setMatchState('running');
+        }
       } else {
         setMatchState('paused');
       }
       return newIsRunning;
     });
-  }, []);
+  }, [matchState]);
 
   const resetRound = useCallback(() => {
     setTimeRemaining(settings.roundTime);
@@ -202,15 +206,15 @@ export default function TapScoreHubPage() {
               description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
           });
           const timer = setTimeout(() => {
-            setIsTimerRunning(true);
             setMatchState('running');
+            setIsTimerRunning(true);
           }, settings.restTime * 1000);
           return () => clearTimeout(timer);
       }
   }, [matchState, currentRound, settings.restTime, toast]);
 
   useEffect(() => {
-    if (!isTimerRunning || matchState === 'finished') {
+    if (!isTimerRunning || matchState !== 'running') {
       return;
     }
 
@@ -237,9 +241,11 @@ export default function TapScoreHubPage() {
         
         {matchState !== 'running' && (
           <div className="absolute top-4 right-4 z-10">
+            <Link href="/settings" passHref>
               <Button variant="outline" size="icon" aria-label="App Settings">
                 <Settings className="h-4 w-4" />
               </Button>
+            </Link>
           </div>
         )}
 
