@@ -72,13 +72,20 @@ export default function TapScoreHubPage() {
 
   const playSound = useCallback((note: string) => {
     if (synth.current) {
+      // Stop any previous sound before starting a new one to avoid overlapping notes error.
+      synth.current.triggerRelease();
       synth.current.triggerAttackRelease(note, '8n');
     }
   }, []);
 
   const handleTimerToggle = useCallback(() => {
     setIsTimerRunning(prev => !prev);
-  }, []);
+    if (!isTimerRunning) {
+      setMatchState('running');
+    } else {
+      setMatchState('paused');
+    }
+  }, [isTimerRunning]);
 
   const resetRound = useCallback(() => {
     setTimeRemaining(settings.roundTime);
@@ -128,12 +135,23 @@ export default function TapScoreHubPage() {
     setIsTimerRunning(false);
     setMatchState('finished');
     playSound('A5');
-    toast({
-      title: "Match Over!",
-      description: `${winner} wins by point lead!`,
-      duration: 5000
-    });
-  }, [playSound, toast]);
+  }, [playSound]);
+
+  useEffect(() => {
+    if (matchState === 'finished') {
+        let winner = '';
+        if (redScore > blueScore) winner = 'Hong (Red)';
+        else if (blueScore > redScore) winner = 'Chong (Blue)';
+        else winner = 'Nobody';
+
+        toast({
+            title: "Match Over!",
+            description: `${winner} wins!`,
+            duration: 5000,
+        });
+    }
+  }, [matchState, redScore, blueScore, toast]);
+
 
   useEffect(() => {
     if (isTimerRunning) {
@@ -166,13 +184,7 @@ export default function TapScoreHubPage() {
   }, [matchState, currentRound, settings.restTime, toast]);
 
   useEffect(() => {
-    if (matchState === 'finished') {
-         toast({ title: "Match Over", description: "The final round has concluded." });
-    }
-  }, [matchState, toast]);
-
-  useEffect(() => {
-    if (!isTimerRunning) {
+    if (!isTimerRunning || matchState === 'finished') {
       return;
     }
 
@@ -195,11 +207,13 @@ export default function TapScoreHubPage() {
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isTimerRunning, currentRound, playSound, settings.totalRounds, startNextRound]);
+  }, [isTimerRunning, currentRound, playSound, settings.totalRounds, startNextRound, matchState]);
 
   const handleSaveSettings = (newSettings: GameSettings) => {
     setSettings(newSettings);
-    setTimeRemaining(newSettings.roundTime);
+    if(matchState === 'idle') {
+      setTimeRemaining(newSettings.roundTime);
+    }
     try {
       localStorage.setItem('gameSettings', JSON.stringify(newSettings));
       toast({ title: "Settings Saved", description: "Your new match rules have been applied." });
@@ -226,12 +240,13 @@ export default function TapScoreHubPage() {
                   currentRound={currentRound}
                   totalRounds={settings.totalRounds}
                   onToggleTimer={handleTimerToggle}
+                  matchState={matchState}
                 />
               </CardContent>
             </Card>
           </div>
         </main>
-        {!isTimerRunning && (
+        {!isTimerRunning && matchState !== 'finished' && (
             <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
                 <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenSettings={() => setIsSettingsOpen(true)} />
             </footer>

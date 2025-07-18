@@ -2,7 +2,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription } from '@/components/ui/card';
 import { Pause, Play } from 'lucide-react';
 
 interface TimerControlProps {
@@ -11,6 +11,7 @@ interface TimerControlProps {
   currentRound: number;
   totalRounds: number;
   onToggleTimer: () => void;
+  matchState: 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
 }
 
 export default function TimerControl({
@@ -19,6 +20,7 @@ export default function TimerControl({
   currentRound,
   totalRounds,
   onToggleTimer,
+  matchState,
 }: TimerControlProps) {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -33,13 +35,14 @@ export default function TimerControl({
           {formatTime(timeRemaining)}
         </div>
         <CardDescription className="text-base">
-          {currentRound} ({totalRounds})
+          Round {currentRound} / {totalRounds}
         </CardDescription>
         <div className="flex justify-center gap-1 w-full">
           <Button
             size="icon"
             onClick={onToggleTimer}
             className="text-xs h-8 w-8"
+            disabled={matchState === 'between_rounds' || matchState === 'finished'}
           >
             {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
