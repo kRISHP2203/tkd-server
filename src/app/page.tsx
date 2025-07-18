@@ -90,9 +90,10 @@ export default function TapScoreHubPage() {
       if (synth.current.context.state !== 'running') {
         synth.current.context.resume();
       }
-      // Cancel any previously scheduled sound events before playing a new one.
-      synth.current.context.transport.cancel();
-      synth.current.triggerAttackRelease(note, '8n', delay);
+      // Immediately stop any currently playing note before starting a new one.
+      // This is the most robust way to prevent scheduling conflicts.
+      synth.current.triggerRelease();
+      synth.current.triggerAttack(note, delay);
     }
   }, []);
 
@@ -141,7 +142,7 @@ export default function TapScoreHubPage() {
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (matchState !== 'paused' && matchState !== 'idle' && matchState !== 'between_rounds' && matchState !== 'finished') return;
+    if (matchState === 'running' || matchState === 'finished') return;
 
     const action: Action = { team, points, type };
     
@@ -278,7 +279,7 @@ export default function TapScoreHubPage() {
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         
         <main className="flex-grow flex flex-col md:flex-row relative">
-          {(matchState === 'idle' || matchState === 'paused' || matchState === 'finished') && (
+          
             <div className="absolute top-4 right-4 z-10">
               <Link href="/settings">
                 <Button variant="ghost" size="icon">
@@ -286,7 +287,7 @@ export default function TapScoreHubPage() {
                 </Button>
               </Link>
             </div>
-          )}
+          
           <ScorePanel team="red" score={redScore} penalties={redPenalties} isWinner={redWinner} />
           <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} isWinner={blueWinner} />
 
