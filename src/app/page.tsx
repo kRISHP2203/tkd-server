@@ -23,7 +23,7 @@ type Action = {
   points: number;
 };
 
-type MatchState = 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
+type MatchState = 'idle' | 'running' | 'paused' | 'round_over' | 'between_rounds' | 'finished';
 
 const defaultSettings: GameSettings = {
   roundTime: 120, // 2 minutes
@@ -123,25 +123,26 @@ export default function TapScoreHubPage() {
     });
   }, [matchState]);
 
-  const resetRound = useCallback(() => {
+  const resetRoundState = useCallback(() => {
     setRedScore(0);
     setBlueScore(0);
+    setHistory([]);
     setTimeRemaining(settings.roundTime);
-    setRestTimeRemaining(settings.restTime);
-    setIsTimerRunning(false);
-  }, [settings.roundTime, settings.restTime]);
+  }, [settings.roundTime]);
+
 
   const resetMatch = useCallback(() => {
-    resetRound();
+    resetRoundState();
+    setRestTimeRemaining(settings.restTime);
     setRedWins(0);
     setBlueWins(0);
     setRedPenalties(0);
     setBluePenalties(0);
     setCurrentRound(1);
-    setHistory([]);
     setMatchState('idle');
+    setIsTimerRunning(false);
     toast({ title: "Match Reset", description: "The match has been reset to its initial state." });
-  }, [resetRound, toast]);
+  }, [resetRoundState, settings.restTime, toast]);
   
   const handleEndMatch = useCallback((winner: string) => {
     setIsTimerRunning(false);
@@ -149,7 +150,12 @@ export default function TapScoreHubPage() {
     if (synth.current) {
         playSound('A5');
     }
-  }, [playSound]);
+    toast({
+        title: "Match Over!",
+        description: `${winner} wins!`,
+        duration: 5000,
+    });
+  }, [playSound, toast]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
     if (matchState === 'running' || matchState === 'finished') return;
@@ -187,22 +193,6 @@ export default function TapScoreHubPage() {
   }, [matchState, playSound, settings.maxGamJeom, handleEndMatch]);
 
   useEffect(() => {
-    if (matchState === 'finished') {
-        let winner = '';
-        if (redScore > blueScore) winner = 'Hong (Red)';
-        else if (blueScore > redScore) winner = 'Chong (Blue)';
-        else winner = 'Nobody';
-
-        toast({
-            title: "Match Over!",
-            description: `${winner} wins!`,
-            duration: 5000,
-        });
-    }
-  }, [matchState, redScore, blueScore, toast]);
-
-
-  useEffect(() => {
     if (isTimerRunning && matchState === 'running') {
       if (redScore - blueScore >= settings.leadPoints) {
         handleEndMatch('Hong (Red)');
@@ -213,21 +203,38 @@ export default function TapScoreHubPage() {
   }, [redScore, blueScore, isTimerRunning, matchState, settings.leadPoints, handleEndMatch]);
   
   const startNextRound = useCallback(() => {
+    // Award win for the completed round
     if (redScore > blueScore) {
       setRedWins(w => w + 1);
     } else if (blueScore > redScore) {
       setBlueWins(w => w + 1);
-    }
-
-    if (currentRound < settings.totalRounds) {
-        setCurrentRound(r => r + 1);
-        resetRound();
-        setMatchState('between_rounds');
     } else {
-        handleEndMatch('Nobody');
+      // Handle draw if necessary, maybe award both a win or neither
     }
-  }, [currentRound, settings.totalRounds, resetRound, handleEndMatch, redScore, blueScore]);
   
+    // Check if the match is over
+    if (currentRound >= settings.totalRounds) {
+      handleEndMatch('Nobody');
+    } else {
+      // Prepare for the next round
+      setCurrentRound(r => r + 1);
+      resetRoundState();
+      setRestTimeRemaining(settings.restTime);
+      setMatchState('between_rounds');
+    }
+  }, [currentRound, settings.totalRounds, resetRoundState, handleEndMatch, redScore, blueScore, settings.restTime]);
+  
+  // Effect to handle the end of a round and transition to the next
+  useEffect(() => {
+    if (matchState === 'round_over') {
+      const timer = setTimeout(() => {
+        startNextRound();
+      }, 2000); // 2-second pause before starting rest period
+      return () => clearTimeout(timer);
+    }
+  }, [matchState, startNextRound]);
+
+
   // Handles the rest period timer
   useEffect(() => {
     if (matchState !== 'between_rounds') {
@@ -235,8 +242,8 @@ export default function TapScoreHubPage() {
     }
     
     toast({
-      title: `Round Over`,
-      description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
+      title: `Round ${currentRound-1} Over`,
+      description: `Get ready! Round ${currentRound} will begin in ${settings.restTime} seconds.`,
     });
 
     const timerInterval = setInterval(() => {
@@ -249,13 +256,12 @@ export default function TapScoreHubPage() {
         clearInterval(timerInterval);
         setMatchState('running');
         setIsTimerRunning(true);
-        resetRound();
         return 0;
       });
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [matchState, settings.restTime, toast, resetRound]);
+  }, [matchState, settings.restTime, toast, currentRound]);
 
   // Handles the main round timer
   useEffect(() => {
@@ -272,15 +278,13 @@ export default function TapScoreHubPage() {
         // End of round
         playSound('G5');
         setIsTimerRunning(false);
-        setTimeout(() => {
-          startNextRound();
-        }, 2000); // Wait 2 seconds before starting next round
+        setMatchState('round_over');
         return 0;
       });
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isTimerRunning, playSound, startNextRound, matchState]);
+  }, [isTimerRunning, playSound, matchState]);
 
   const isFinished = matchState === 'finished';
   const redWinner = isFinished && (redWins > blueWins || (redWins === blueWins && redScore > blueScore));
@@ -299,8 +303,10 @@ export default function TapScoreHubPage() {
         <main className="flex-grow flex flex-col md:flex-row relative">
           
             <div className="absolute top-4 right-4 z-10">
-                <Button variant="ghost" size="icon" onClick={() => setIsOptionsDialogOpen(true)}>
-                  <Settings className="h-6 w-6 text-foreground/80" />
+                <Button variant="ghost" size="icon" asChild>
+                  <Link href="/settings">
+                    <Settings className="h-6 w-6 text-foreground/80" />
+                  </Link>
                 </Button>
             </div>
           
