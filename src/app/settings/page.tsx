@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Wifi, Users, Server, AlertTriangle } from 'lucide-react';
+import { Copy, Wifi, Users, Server, AlertTriangle, Info } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type ConnectionMode = 'websocket' | 'udp';
@@ -26,6 +26,7 @@ interface AppSettings {
   connectionTimeout: number;
   autoReconnect: boolean;
   broadcastScore: boolean;
+  serverIp: string;
 }
 
 const defaultSettings: AppSettings = {
@@ -34,20 +35,13 @@ const defaultSettings: AppSettings = {
   connectionTimeout: 5000,
   autoReconnect: true,
   broadcastScore: false,
+  serverIp: '192.168.1.100', // Default placeholder
 };
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
-  const [localIp, setLocalIp] = useState('127.0.0.1');
   const { toast } = useToast();
 
-  useEffect(() => {
-    // NOTE: Getting the local network IP is not directly possible in the browser for security reasons.
-    // 'localhost' or '127.0.0.1' is a common fallback.
-    // In a real application, you might need a backend service to determine and provide the local IP.
-    setLocalIp(window.location.hostname);
-  }, []);
-  
   // A mock list of referees for display purposes.
   const authorizedReferees: Referee[] = [
     { id: 'Referee-1', lastSeen: '2s ago' },
@@ -55,10 +49,10 @@ export default function SettingsPage() {
   ];
 
   const handleCopyIp = () => {
-    navigator.clipboard.writeText(localIp);
+    navigator.clipboard.writeText(settings.serverIp);
     toast({
       title: 'IP Address Copied',
-      description: `${localIp} has been copied to your clipboard.`,
+      description: `${settings.serverIp} has been copied to your clipboard.`,
     });
   };
 
@@ -93,7 +87,49 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Alert variant="default" className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
+            <Info className="h-4 w-4 text-blue-500" />
+            <AlertTitle>Manual IP Configuration Required</AlertTitle>
+            <AlertDescription className="text-blue-800 dark:text-blue-300">
+              For referees to connect, you must find this device's <strong>Local Network IP Address</strong> and enter it below. The server and all referee devices must be on the same WiFi network.
+            </AlertDescription>
+          </Alert>
+
           <div className="space-y-4 rounded-lg border p-4">
+            <div className="grid md:grid-cols-2 gap-4">
+               <div className="space-y-2">
+                <Label htmlFor="server-ip">This Device's Local IP</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="server-ip"
+                    type="text" 
+                    value={settings.serverIp}
+                    onChange={(e) => setSettings(s => ({ ...s, serverIp: e.target.value }))}
+                    placeholder="e.g. 192.168.1.100" 
+                  />
+                  <Button variant="outline" size="icon" onClick={handleCopyIp}>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="server-port">Listening Port</Label>
+                <Input 
+                  id="server-port" 
+                  type="number" 
+                  value={settings.serverPort}
+                  onChange={(e) => setSettings(s => ({ ...s, serverPort: parseInt(e.target.value) || 0 }))}
+                  placeholder="e.g. 9000" 
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground px-1">
+                Referees should connect to the IP address and port configured above.
+            </p>
+
+            <Separator />
+            
             <div className="grid md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="connection-mode">Connection Mode</Label>
@@ -111,39 +147,6 @@ export default function SettingsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="server-port">Listening Port</Label>
-                <Input 
-                  id="server-port" 
-                  type="number" 
-                  value={settings.serverPort}
-                  onChange={(e) => setSettings(s => ({ ...s, serverPort: parseInt(e.target.value) || 0 }))}
-                  placeholder="e.g. 9000" 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Device IP Address</Label>
-              <div className="flex items-center gap-2">
-                <Input 
-                  type="text" 
-                  value={localIp}
-                  readOnly 
-                  className="bg-muted"
-                />
-                <Button variant="outline" size="icon" onClick={handleCopyIp}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Referees should connect to this IP address and port.
-              </p>
-            </div>
-            
-            <Separator />
-
-            <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
                     <Label htmlFor="connection-timeout">Timeout (ms)</Label>
                     <Input 
                         id="connection-timeout" 
@@ -153,23 +156,24 @@ export default function SettingsPage() {
                         placeholder="e.g. 5000" 
                     />
                 </div>
-                <div className="flex items-end space-x-4">
-                    <div className="flex items-center space-x-2 pt-6">
-                        <Switch 
-                            id="auto-reconnect" 
-                            checked={settings.autoReconnect}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, autoReconnect: checked }))}
-                        />
-                        <Label htmlFor="auto-reconnect">Auto-Reconnect</Label>
-                    </div>
-                    <div className="flex items-center space-x-2 pt-6">
-                        <Switch 
-                            id="broadcast-score"
-                            checked={settings.broadcastScore}
-                            onCheckedChange={(checked) => setSettings(s => ({ ...s, broadcastScore: checked }))}
-                        />
-                        <Label htmlFor="broadcast-score">Broadcast Score</Label>
-                    </div>
+            </div>
+
+            <div className="flex items-center space-x-6 pt-2">
+                <div className="flex items-center space-x-2">
+                    <Switch 
+                        id="auto-reconnect" 
+                        checked={settings.autoReconnect}
+                        onCheckedChange={(checked) => setSettings(s => ({ ...s, autoReconnect: checked }))}
+                    />
+                    <Label htmlFor="auto-reconnect">Auto-Reconnect</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Switch 
+                        id="broadcast-score"
+                        checked={settings.broadcastScore}
+                        onCheckedChange={(checked) => setSettings(s => ({ ...s, broadcastScore: checked }))}
+                    />
+                    <Label htmlFor="broadcast-score">Broadcast Score</Label>
                 </div>
             </div>
           </div>
@@ -210,3 +214,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
