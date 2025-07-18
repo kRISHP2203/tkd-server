@@ -48,6 +48,7 @@ export default function TapScoreHubPage() {
   const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
   
   const synth = useRef<any>(null);
+  const isPlaying = useRef(false); // Ref to track if a sound is currently playing
   const { toast } = useToast()
 
   // Load settings from localStorage on mount
@@ -86,14 +87,19 @@ export default function TapScoreHubPage() {
   }, []);
 
   const playSound = useCallback((note: string, delay?: number) => {
-    if (synth.current) {
-      if (synth.current.context.state !== 'running') {
-        synth.current.context.resume();
-      }
-      // Immediately stop any currently playing note before starting a new one.
-      // This is the most robust way to prevent scheduling conflicts.
-      synth.current.triggerRelease();
-      synth.current.triggerAttack(note, delay);
+    if (synth.current && !isPlaying.current) {
+        if (synth.current.context.state !== 'running') {
+            synth.current.context.resume();
+        }
+        isPlaying.current = true;
+        synth.current.triggerAttackRelease(note, '8n', delay);
+        // Use Tone.js's Transport to schedule the release of the lock.
+        // This is more reliable than setTimeout for audio contexts.
+        import('tone').then(Tone => {
+            Tone.Transport.scheduleOnce(() => {
+                isPlaying.current = false;
+            }, Tone.now() + 0.2); // Release lock after 200ms
+        });
     }
   }, []);
 
@@ -328,4 +334,3 @@ export default function TapScoreHubPage() {
     </>
   );
 }
-
