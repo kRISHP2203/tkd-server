@@ -3,7 +3,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { RotateCcw } from 'lucide-react';
 
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
@@ -26,12 +25,11 @@ export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsP
     <Card className="bg-transparent border-0 shadow-none max-w-4xl mx-auto">
       <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card">
         <Button
-            size="icon"
             variant="outline"
             onClick={onResetMatch}
-            className="text-xs h-8 w-8"
+            size="sm"
           >
-            <RotateCcw className="h-4 w-4" />
+            Restart Game
         </Button>
 
         <div className="flex items-center justify-center gap-4">
