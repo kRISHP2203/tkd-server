@@ -24,8 +24,8 @@ const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blu
 
 export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }: JudgeControlsProps) {
   return (
-    <Card className="bg-transparent border-0 shadow-none max-w-4xl mx-auto">
-      <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card/80">
+    <Card className="bg-transparent border-0 shadow-none max-w-5xl mx-auto">
+      <CardContent className="p-2 flex items-center justify-around gap-4 rounded-lg border bg-card/80">
         <Button
             variant="outline"
             onClick={onResetMatch}
@@ -34,30 +34,26 @@ export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }
             Restart Game
         </Button>
 
-        <div className="flex-grow flex items-center justify-center gap-4">
-            {/* Red Team Controls */}
-            <div className="flex items-center gap-3">
-                <span className="font-bold font-headline text-destructive text-sm">RED</span>
-                <div className="flex items-center gap-1">
-                    <ActionButton team="red" points={1} onAction={onAction}>+1</ActionButton>
-                    <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
-                </div>
-                <Separator orientation="vertical" className="h-6" />
-                <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>gam-jeom</Button>
+        {/* Red Team Controls */}
+        <div className="flex items-center gap-3">
+            <span className="font-bold font-headline text-destructive text-sm">RED</span>
+            <div className="flex items-center gap-1">
+                <ActionButton team="red" points={1} onAction={onAction}>+1</ActionButton>
+                <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
             </div>
+            <Separator orientation="vertical" className="h-6" />
+            <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>gam-jeom</Button>
+        </div>
 
-            <Separator orientation="vertical" className="h-10" />
-
-            {/* Blue Team Controls */}
-            <div className="flex items-center gap-3">
-                <span className="font-bold font-headline text-primary text-sm">BLUE</span>
-                <div className="flex items-center gap-1">
-                    <ActionButton team="blue" points={1} onAction={onAction}>+1</ActionButton>
-                    <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
-                </div>
-                <Separator orientation="vertical" className="h-6" />
-                <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
+        {/* Blue Team Controls */}
+        <div className="flex items-center gap-3">
+            <span className="font-bold font-headline text-primary text-sm">BLUE</span>
+            <div className="flex items-center gap-1">
+                <ActionButton team="blue" points={1} onAction={onAction}>+1</ActionButton>
+                <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
             </div>
+            <Separator orientation="vertical" className="h-6" />
+            <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
         </div>
 
         <Button variant="outline" size="icon" onClick={onOpenSettings}>
