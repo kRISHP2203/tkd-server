@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Pause, Play, RotateCcw, Undo } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 
 interface TimerControlProps {
   timeRemaining: number;
@@ -10,9 +10,6 @@ interface TimerControlProps {
   currentRound: number;
   totalRounds: number;
   onToggleTimer: () => void;
-  onResetMatch: () => void;
-  onUndo: () => void;
-  canUndo: boolean;
 }
 
 export default function TimerControl({
@@ -21,9 +18,6 @@ export default function TimerControl({
   currentRound,
   totalRounds,
   onToggleTimer,
-  onResetMatch,
-  onUndo,
-  canUndo,
 }: TimerControlProps) {
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -41,22 +35,13 @@ export default function TimerControl({
         <div className="font-headline font-bold text-5xl text-foreground/90 tabular-nums">
           {formatTime(timeRemaining)}
         </div>
-        <div className="grid grid-cols-2 gap-1 w-full">
+        <div className="grid grid-cols-1 gap-1 w-full">
           <Button
             size="icon"
             onClick={onToggleTimer}
             className="text-xs h-8 w-8"
           >
             {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-          </Button>
-
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={onResetMatch}
-            className="text-xs h-8 w-8"
-          >
-            <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
       </CardContent>

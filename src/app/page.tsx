@@ -128,16 +128,13 @@ export default function TapScoreHubPage() {
                 currentRound={currentRound}
                 totalRounds={TOTAL_ROUNDS}
                 onToggleTimer={handleTimerToggle}
-                onResetMatch={resetMatch}
-                onUndo={handleUndo}
-                canUndo={history.length > 0}
               />
             </CardContent>
           </Card>
         </div>
       </main>
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border">
-          <JudgeControls onAction={handleJudgeAction} />
+          <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} />
       </footer>
     </div>
   );

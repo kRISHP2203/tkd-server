@@ -3,9 +3,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { RotateCcw } from 'lucide-react';
 
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
+  onResetMatch: () => void;
 }
 
 const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
@@ -19,33 +21,46 @@ const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blu
     </Button>
   );
 
-export default function JudgeControls({ onAction }: JudgeControlsProps) {
+export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsProps) {
   return (
     <Card className="bg-transparent border-0 shadow-none max-w-4xl mx-auto">
-      <CardContent className="p-2 flex items-center justify-center gap-4 rounded-lg border bg-card">
-        {/* Red Team Controls */}
-        <div className="flex items-center gap-3">
-            <span className="font-bold font-headline text-destructive text-sm">RED</span>
-            <div className="flex items-center gap-1">
-                <ActionButton team="red" points={1} onAction={onAction}>+1</ActionButton>
-                <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
+      <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card">
+        <Button
+            size="icon"
+            variant="outline"
+            onClick={onResetMatch}
+            className="text-xs h-8 w-8"
+          >
+            <RotateCcw className="h-4 w-4" />
+        </Button>
+
+        <div className="flex items-center justify-center gap-4">
+            {/* Red Team Controls */}
+            <div className="flex items-center gap-3">
+                <span className="font-bold font-headline text-destructive text-sm">RED</span>
+                <div className="flex items-center gap-1">
+                    <ActionButton team="red" points={1} onAction={onAction}>+1</ActionButton>
+                    <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
+                </div>
+                <Separator orientation="vertical" className="h-6" />
+                <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>gam-jeom</Button>
             </div>
-            <Separator orientation="vertical" className="h-6" />
-            <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>gam-jeom</Button>
+
+            <Separator orientation="vertical" className="h-10" />
+
+            {/* Blue Team Controls */}
+            <div className="flex items-center gap-3">
+                <span className="font-bold font-headline text-primary text-sm">BLUE</span>
+                <div className="flex items-center gap-1">
+                    <ActionButton team="blue" points={1} onAction={onAction}>+1</ActionButton>
+                    <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
+                </div>
+                <Separator orientation="vertical" className="h-6" />
+                <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
+            </div>
         </div>
 
-        <Separator orientation="vertical" className="h-10" />
-
-        {/* Blue Team Controls */}
-        <div className="flex items-center gap-3">
-             <span className="font-bold font-headline text-primary text-sm">BLUE</span>
-             <div className="flex items-center gap-1">
-                <ActionButton team="blue" points={1} onAction={onAction}>+1</ActionButton>
-                <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
-            </div>
-            <Separator orientation="vertical" className="h-6" />
-            <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
-        </div>
+        <div className="w-8"></div>
       </CardContent>
     </Card>
   );
