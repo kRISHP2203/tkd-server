@@ -41,7 +41,7 @@ export default function TimerControl({
         <div className="font-headline font-bold text-5xl text-foreground/90 tabular-nums">
           {formatTime(timeRemaining)}
         </div>
-        <div className="grid grid-cols-3 gap-1 w-full">
+        <div className="grid grid-cols-2 gap-1 w-full">
           <Button
             size="icon"
             onClick={onToggleTimer}
@@ -50,16 +50,6 @@ export default function TimerControl({
             {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
 
-          <Button
-            size="icon"
-            variant="secondary"
-            onClick={onUndo}
-            disabled={!canUndo}
-            className="text-xs h-8 w-8"
-          >
-            <Undo className="h-4 w-4" />
-          </Button>
-          
           <Button
             size="icon"
             variant="outline"
