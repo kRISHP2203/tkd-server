@@ -176,10 +176,14 @@ export default function TapScoreHubPage() {
   }, [redScore, blueScore, isTimerRunning, settings.leadPoints, handleEndMatch]);
   
   const startNextRound = useCallback(() => {
-    setMatchState('between_rounds');
-    setCurrentRound(r => r + 1);
-    resetRound();
-  }, [resetRound]);
+    if (currentRound < settings.totalRounds) {
+        setMatchState('between_rounds');
+        setCurrentRound(r => r + 1);
+        resetRound();
+    } else {
+        setMatchState('finished');
+    }
+  }, [currentRound, settings.totalRounds, resetRound]);
   
   useEffect(() => {
       if (matchState === 'between_rounds') {
@@ -188,8 +192,8 @@ export default function TapScoreHubPage() {
               description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
           });
           const timer = setTimeout(() => {
-            setIsTimerRunning(true);
             setMatchState('running');
+            setIsTimerRunning(true);
           }, settings.restTime * 1000);
           return () => clearTimeout(timer);
       }
@@ -209,17 +213,13 @@ export default function TapScoreHubPage() {
         // End of round
         playSound('G5');
         setIsTimerRunning(false);
-        if (currentRound < settings.totalRounds) {
-          startNextRound();
-        } else {
-          setMatchState('finished');
-        }
+        startNextRound();
         return 0;
       });
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isTimerRunning, currentRound, playSound, settings.totalRounds, startNextRound, matchState]);
+  }, [isTimerRunning, playSound, startNextRound, matchState]);
 
   const handleSaveSettings = (newSettings: GameSettings) => {
     setSettings(newSettings);
@@ -258,7 +258,7 @@ export default function TapScoreHubPage() {
             </Card>
           </div>
         </main>
-        {!isTimerRunning && matchState !== 'finished' && (
+        {(matchState === 'paused' || matchState === 'idle' || matchState === 'between_rounds') && (
             <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
                 <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenSettings={() => setIsSettingsOpen(true)} />
             </footer>
