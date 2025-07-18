@@ -5,7 +5,6 @@ import {
   Card,
   CardContent,
 } from '@/components/ui/card';
-import Header from '@/components/app/header';
 import ScorePanel from '@/components/app/score-panel';
 import TimerControl from '@/components/app/timer-control';
 import JudgeControls from '@/components/app/judge-controls';
@@ -179,7 +178,6 @@ export default function TapScoreHubPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground p-4 font-body">
-      <Header />
       <main className="flex-grow flex flex-col md:flex-row gap-4 mt-4 relative pb-40">
         <ScorePanel team="red" score={redScore} />
         <ScorePanel team="blue" score={blueScore} />
