@@ -8,7 +8,7 @@ import {
 import Header from '@/components/app/header';
 import ScorePanel from '@/components/app/score-panel';
 import TimerControl from '@/components/app/timer-control';
-import RefereeControls from '@/components/app/referee-controls';
+import JudgeControls from '@/components/app/judge-controls';
 import AdvantageDisplay from '@/components/app/advantage-display';
 import { analyzeAdvantage, type AdvantageAnalyzerOutput } from '@/ai/flows/advantage-analyzer';
 
@@ -16,13 +16,6 @@ type Action = {
   type: 'score' | 'penalty';
   team: 'red' | 'blue';
   points: number;
-  refereeId: number;
-};
-
-type Referee = {
-  id: number;
-  status: 'connected' | 'disconnected';
-  lastSeen: number;
 };
 
 type ScoreEvent = {
@@ -33,7 +26,6 @@ type ScoreEvent = {
 
 const ROUND_DURATION = 120; // 2 minutes
 const TOTAL_ROUNDS = 3;
-const REFEREE_TIMEOUT = 5000; // 5 seconds
 const ADVANTAGE_CHECK_INTERVAL = 10000; // 10 seconds
 
 export default function TapScoreHubPage() {
@@ -43,11 +35,6 @@ export default function TapScoreHubPage() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [history, setHistory] = useState<Action[]>([]);
-  const [referees, setReferees] = useState<Referee[]>([
-    { id: 1, status: 'disconnected', lastSeen: 0 },
-    { id: 2, status: 'disconnected', lastSeen: 0 },
-    { id: 3, status: 'disconnected', lastSeen: 0 },
-  ]);
   const [matchStartTime, setMatchStartTime] = useState<number | null>(null);
   const [scoreEvents, setScoreEvents] = useState<ScoreEvent[]>([]);
   const [advantageResult, setAdvantageResult] = useState<AdvantageAnalyzerOutput | null>(null);
@@ -106,10 +93,10 @@ export default function TapScoreHubPage() {
 
   }, [history]);
 
-  const handleRefereeAction = useCallback((refereeId: number, team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
+  const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
     if (!isTimerRunning) return;
 
-    const action: Action = { refereeId, team, points, type };
+    const action: Action = { team, points, type };
     const scoreEvent: ScoreEvent = { team, points, timestamp: Date.now() };
     
     if (team === 'red') {
@@ -122,9 +109,6 @@ export default function TapScoreHubPage() {
     setHistory(h => [...h, action]);
     setScoreEvents(se => [...se, scoreEvent]);
 
-    setReferees(prevReferees => prevReferees.map(ref => 
-      ref.id === refereeId ? { ...ref, status: 'connected', lastSeen: Date.now() } : ref
-    ));
   }, [isTimerRunning, playSound]);
 
   useEffect(() => {
@@ -151,19 +135,6 @@ export default function TapScoreHubPage() {
     return () => clearInterval(timerInterval);
   }, [isTimerRunning, currentRound, playSound, resetRound]);
   
-  useEffect(() => {
-    const refereeCheckInterval = setInterval(() => {
-      const now = Date.now();
-      setReferees(prevReferees => prevReferees.map(ref => {
-        if (ref.status === 'connected' && now - ref.lastSeen > REFEREE_TIMEOUT) {
-          return { ...ref, status: 'disconnected' };
-        }
-        return ref;
-      }));
-    }, 1000);
-
-    return () => clearInterval(refereeCheckInterval);
-  }, []);
 
   useEffect(() => {
     if (!isTimerRunning) return;
@@ -232,7 +203,7 @@ export default function TapScoreHubPage() {
         </div>
       </main>
       <footer className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border">
-          <RefereeControls referees={referees} onAction={handleRefereeAction} />
+          <JudgeControls onAction={handleJudgeAction} />
       </footer>
     </div>
   );
