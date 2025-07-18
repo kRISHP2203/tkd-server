@@ -28,7 +28,6 @@ export default function TimerControl({
   return (
     <Card className="bg-transparent border-0 shadow-none text-center">
       <CardHeader className="p-1">
-        <CardTitle className="font-headline text-lg">Match Control</CardTitle>
         <CardDescription className="text-xs">Round {currentRound} of {totalRounds}</CardDescription>
       </CardHeader>
       <CardContent className="p-1 flex flex-col items-center gap-2">
