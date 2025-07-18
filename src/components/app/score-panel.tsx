@@ -26,7 +26,7 @@ export default function ScorePanel({ team, score }: ScorePanelProps) {
   const isRed = team === 'red';
   
   const panelClasses = cn(
-    'flex-grow flex flex-col transition-all duration-300 border-0',
+    'flex-grow flex flex-col transition-all duration-300 border-0 rounded-none',
     isRed ? 'bg-destructive' : 'bg-primary'
   );
 

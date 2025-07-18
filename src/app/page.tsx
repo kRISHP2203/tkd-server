@@ -57,21 +57,6 @@ export default function TapScoreHubPage() {
     setHistory([]);
   }, [resetRound]);
   
-  const handleUndo = useCallback(() => {
-    if (history.length === 0) return;
-
-    const lastAction = history[history.length - 1];
-    
-    if (lastAction.team === 'red') {
-      setRedScore(s => Math.max(0, s - lastAction.points));
-    } else {
-      setBlueScore(s => Math.max(0, s - lastAction.points));
-    }
-
-    setHistory(h => h.slice(0, -1));
-
-  }, [history]);
-
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
     if (!isTimerRunning) return;
 
@@ -114,8 +99,8 @@ export default function TapScoreHubPage() {
   
 
   return (
-    <div className="flex flex-col min-h-screen bg-background text-foreground p-4 font-body">
-      <main className="flex-grow flex flex-col md:flex-row gap-4 relative pb-40">
+    <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+      <main className="flex-grow flex flex-col md:flex-row relative pb-28">
         <ScorePanel team="red" score={redScore} />
         <ScorePanel team="blue" score={blueScore} />
 
@@ -133,7 +118,7 @@ export default function TapScoreHubPage() {
           </Card>
         </div>
       </main>
-      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border">
+      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
           <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} />
       </footer>
     </div>
