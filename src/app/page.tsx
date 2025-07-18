@@ -98,7 +98,7 @@ export default function TapScoreHubPage() {
   }, [resetRound, toast]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (!isTimerRunning) return;
+    if (isTimerRunning) return;
 
     const action: Action = { team, points, type };
     
@@ -166,10 +166,13 @@ export default function TapScoreHubPage() {
   }, [matchState, currentRound, settings.restTime, toast]);
 
   useEffect(() => {
+    if (matchState === 'finished') {
+         toast({ title: "Match Over", description: "The final round has concluded." });
+    }
+  }, [matchState, toast]);
+
+  useEffect(() => {
     if (!isTimerRunning) {
-        if (matchState === 'finished') {
-             toast({ title: "Match Over", description: "The final round has concluded." });
-        }
       return;
     }
 
@@ -192,7 +195,7 @@ export default function TapScoreHubPage() {
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isTimerRunning, currentRound, playSound, settings.totalRounds, startNextRound, toast, matchState]);
+  }, [isTimerRunning, currentRound, playSound, settings.totalRounds, startNextRound]);
 
   const handleSaveSettings = (newSettings: GameSettings) => {
     setSettings(newSettings);
@@ -228,9 +231,11 @@ export default function TapScoreHubPage() {
             </Card>
           </div>
         </main>
-        <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
-            <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenSettings={() => setIsSettingsOpen(true)} />
-        </footer>
+        {!isTimerRunning && (
+            <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
+                <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenSettings={() => setIsSettingsOpen(true)} />
+            </footer>
+        )}
       </div>
       <SettingsDialog
         isOpen={isSettingsOpen}
