@@ -83,13 +83,16 @@ export default function TapScoreHubPage() {
   }, []);
 
   const handleTimerToggle = useCallback(() => {
-    setIsTimerRunning(prev => !prev);
-    if (!isTimerRunning) {
-      setMatchState('running');
-    } else {
-      setMatchState('paused');
-    }
-  }, [isTimerRunning]);
+    setIsTimerRunning(prev => {
+      const newIsRunning = !prev;
+      if (newIsRunning) {
+        setMatchState('running');
+      } else {
+        setMatchState('paused');
+      }
+      return newIsRunning;
+    });
+  }, []);
 
   const resetRound = useCallback(() => {
     setTimeRemaining(settings.roundTime);
@@ -115,7 +118,7 @@ export default function TapScoreHubPage() {
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (isTimerRunning) return;
+    if (matchState === 'running') return;
 
     const action: Action = { team, points, type };
     
@@ -147,7 +150,7 @@ export default function TapScoreHubPage() {
     playSound('C4');
     setHistory(h => [...h, action]);
 
-  }, [isTimerRunning, playSound, settings.maxGamJeom, handleEndMatch]);
+  }, [matchState, playSound, settings.maxGamJeom, handleEndMatch]);
 
   useEffect(() => {
     if (matchState === 'finished') {
@@ -182,6 +185,7 @@ export default function TapScoreHubPage() {
         resetRound();
     } else {
         setMatchState('finished');
+        setIsTimerRunning(false);
     }
   }, [currentRound, settings.totalRounds, resetRound]);
   
