@@ -2,7 +2,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
 import { Settings } from 'lucide-react';
 import {
   Card,
@@ -15,6 +14,7 @@ import JudgeControls from '@/components/app/judge-controls';
 import type { GameSettings } from '@/components/app/game-options-dialog';
 import GameOptionsDialog from '@/components/app/game-options-dialog';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 
 type Action = {
@@ -87,16 +87,13 @@ export default function TapScoreHubPage() {
 
   const playSound = useCallback((note: string, delay?: number) => {
     if (synth.current) {
-      // Ensure the audio context is ready.
       if (synth.current.context.state !== 'running') {
         synth.current.context.resume();
       }
-      // Stop any previous note and play the new one to prevent scheduling errors.
-      synth.current.triggerRelease();
+      synth.current.context.transport.cancel();
       synth.current.triggerAttackRelease(note, '8n', delay);
     }
   }, []);
-  
 
   const handleTimerToggle = useCallback(() => {
     setIsTimerRunning(prev => {
@@ -143,7 +140,7 @@ export default function TapScoreHubPage() {
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (matchState === 'running') return;
+    if (matchState !== 'paused' && matchState !== 'idle' && matchState !== 'between_rounds' && matchState !== 'finished') return;
 
     const action: Action = { team, points, type };
     
