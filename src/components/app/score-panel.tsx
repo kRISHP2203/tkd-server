@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -8,9 +9,10 @@ interface ScorePanelProps {
   team: 'red' | 'blue';
   score: number;
   penalties: number;
+  isWinner?: boolean;
 }
 
-export default function ScorePanel({ team, score, penalties }: ScorePanelProps) {
+export default function ScorePanel({ team, score, penalties, isWinner = false }: ScorePanelProps) {
   const [prevScore, setPrevScore] = useState(score);
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
@@ -58,7 +60,7 @@ export default function ScorePanel({ team, score, penalties }: ScorePanelProps) 
       </CardHeader>
       <CardContent className="flex-grow flex items-center justify-center">
         <div className={scoreClasses}>
-          {score}
+          {isWinner ? 'W' : score}
         </div>
       </CardContent>
     </Card>

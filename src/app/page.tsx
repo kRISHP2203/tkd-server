@@ -83,8 +83,12 @@ export default function TapScoreHubPage() {
   }, []);
 
   const playSound = useCallback((note: string, delay?: number) => {
-    if (synth.current && synth.current.context.state === 'running') {
-        // Ensure the audio context is ready and stop any previous note to prevent errors.
+    if (synth.current) {
+        // Ensure the audio context is ready.
+        if (synth.current.context.state !== 'running') {
+            synth.current.context.resume();
+        }
+        // Stop any previous note and play the new one to prevent scheduling errors.
         synth.current.triggerRelease();
         synth.current.triggerAttackRelease(note, '8n', delay);
     }
@@ -131,7 +135,7 @@ export default function TapScoreHubPage() {
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (matchState === 'running' || matchState === 'finished') return;
+    if (matchState === 'running') return;
 
     const action: Action = { team, points, type };
     
@@ -208,11 +212,12 @@ export default function TapScoreHubPage() {
               description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
           });
           const timer = setTimeout(() => {
-            handleTimerToggle();
+            setMatchState('running');
+            setIsTimerRunning(true);
           }, settings.restTime * 1000);
           return () => clearTimeout(timer);
       }
-  }, [matchState, currentRound, settings.restTime, toast, handleTimerToggle]);
+  }, [matchState, currentRound, settings.restTime, toast]);
 
   useEffect(() => {
     if (!isTimerRunning || matchState !== 'running') {
@@ -236,6 +241,10 @@ export default function TapScoreHubPage() {
     return () => clearInterval(timerInterval);
   }, [isTimerRunning, playSound, startNextRound, matchState]);
 
+  const isFinished = matchState === 'finished';
+  const redWinner = isFinished && redScore > blueScore;
+  const blueWinner = isFinished && blueScore > redScore;
+
   return (
     <>
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -250,8 +259,8 @@ export default function TapScoreHubPage() {
               </Link>
             </div>
           )}
-          <ScorePanel team="red" score={redScore} penalties={redPenalties} />
-          <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} />
+          <ScorePanel team="red" score={redScore} penalties={redPenalties} isWinner={redWinner} />
+          <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} isWinner={blueWinner} />
 
           <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
             <Card className="w-48 p-2 flex flex-col gap-2 bg-card/80 backdrop-blur-sm pointer-events-auto">
@@ -268,7 +277,7 @@ export default function TapScoreHubPage() {
             </Card>
           </div>
         </main>
-        {(matchState === 'paused' || matchState === 'idle' || matchState === 'between_rounds') && (
+        {(matchState === 'paused' || matchState === 'idle' || matchState === 'between_rounds' || matchState === 'finished') && (
             <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
                 <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenOptions={() => setIsOptionsDialogOpen(true)} />
             </footer>
