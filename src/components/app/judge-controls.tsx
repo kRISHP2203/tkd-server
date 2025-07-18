@@ -60,8 +60,8 @@ export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }
             </div>
         </div>
 
-        <Button variant="outline" size="sm" onClick={onOpenSettings}>
-            Game Options
+        <Button variant="outline" size="icon" onClick={onOpenSettings}>
+            <Settings className="h-4 w-4" />
         </Button>
       </CardContent>
     </Card>
