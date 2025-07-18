@@ -87,13 +87,13 @@ export default function TapScoreHubPage() {
 
   const playSound = useCallback((note: string, delay?: number) => {
     if (synth.current) {
-        // Ensure the audio context is ready.
-        if (synth.current.context.state !== 'running') {
-            synth.current.context.resume();
-        }
-        // Stop any previous note and play the new one to prevent scheduling errors.
-        synth.current.triggerRelease();
-        synth.current.triggerAttackRelease(note, '8n', delay);
+      // Ensure the audio context is ready.
+      if (synth.current.context.state !== 'running') {
+        synth.current.context.resume();
+      }
+      // Stop any previous note and play the new one to prevent scheduling errors.
+      synth.current.triggerRelease();
+      synth.current.triggerAttackRelease(note, '8n', delay);
     }
   }, []);
   
@@ -102,8 +102,10 @@ export default function TapScoreHubPage() {
     setIsTimerRunning(prev => {
       const newIsRunning = !prev;
       if (newIsRunning) {
-        if (matchState === 'idle' || matchState === 'paused' || matchState === 'between_rounds') {
+        if (matchState === 'idle' || matchState === 'paused') {
           setMatchState('running');
+        } else if (matchState === 'between_rounds') {
+          setRestTimeRemaining(0); // Manually start next round
         }
       } else {
         if(matchState === 'running') {
@@ -213,27 +215,32 @@ export default function TapScoreHubPage() {
   
   // Handles the rest period timer
   useEffect(() => {
-    if (matchState === 'between_rounds') {
-      toast({
-        title: `Round Over`,
-        description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
-      });
-
-      const timerInterval = setInterval(() => {
-        setRestTimeRemaining(prevTime => {
-          if (prevTime > 1) {
-            return prevTime - 1;
-          }
-          // End of rest period
-          setMatchState('running');
-          setIsTimerRunning(true);
-          return 0;
-        });
-      }, 1000);
-
-      return () => clearInterval(timerInterval);
+    if (matchState !== 'between_rounds') {
+      return;
     }
-  }, [matchState, settings.restTime, toast]);
+    
+    toast({
+      title: `Round Over`,
+      description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
+    });
+
+    const timerInterval = setInterval(() => {
+      setRestTimeRemaining(prevTime => {
+        if (prevTime > 1) {
+          return prevTime - 1;
+        }
+        
+        // End of rest period
+        clearInterval(timerInterval);
+        setMatchState('running');
+        setIsTimerRunning(true);
+        resetRound();
+        return 0;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerInterval);
+  }, [matchState, settings.restTime, toast, resetRound]);
 
   // Handles the main round timer
   useEffect(() => {
