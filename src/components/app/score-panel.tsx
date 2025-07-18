@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
 interface ScorePanelProps {
   team: 'red' | 'blue';
   score: number;
+  penalties: number;
 }
 
-export default function ScorePanel({ team, score }: ScorePanelProps) {
+export default function ScorePanel({ team, score, penalties }: ScorePanelProps) {
   const [prevScore, setPrevScore] = useState(score);
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
@@ -30,9 +31,13 @@ export default function ScorePanel({ team, score }: ScorePanelProps) {
     isRed ? 'bg-destructive' : 'bg-primary'
   );
 
+  const textClasses = cn(
+    isRed ? 'text-destructive-foreground' : 'text-primary-foreground'
+  );
+
   const titleClasses = cn(
     'font-headline text-4xl md:text-5xl font-bold',
-    isRed ? 'text-destructive-foreground' : 'text-primary-foreground'
+    textClasses
   );
 
   const scoreClasses = cn(
@@ -47,6 +52,9 @@ export default function ScorePanel({ team, score }: ScorePanelProps) {
         <CardTitle className={titleClasses}>
           {teamName}
         </CardTitle>
+        <CardDescription className={cn(textClasses, 'text-lg font-medium')}>
+          Gam-jeom: {penalties}
+        </CardDescription>
       </CardHeader>
       <CardContent className="flex-grow flex items-center justify-center">
         <div className={scoreClasses}>

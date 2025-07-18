@@ -21,6 +21,8 @@ const TOTAL_ROUNDS = 3;
 export default function TapScoreHubPage() {
   const [redScore, setRedScore] = useState(0);
   const [blueScore, setBlueScore] = useState(0);
+  const [redPenalties, setRedPenalties] = useState(0);
+  const [bluePenalties, setBluePenalties] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(ROUND_DURATION);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
@@ -53,6 +55,8 @@ export default function TapScoreHubPage() {
     resetRound();
     setRedScore(0);
     setBlueScore(0);
+    setRedPenalties(0);
+    setBluePenalties(0);
     setCurrentRound(1);
     setHistory([]);
   }, [resetRound]);
@@ -62,10 +66,21 @@ export default function TapScoreHubPage() {
 
     const action: Action = { team, points, type };
     
-    if (team === 'red') {
-      setRedScore(s => s + points);
-    } else {
-      setBlueScore(s => s + points);
+    if (type === 'score') {
+      if (team === 'red') {
+        setRedScore(s => Math.max(0, s + points));
+      } else {
+        setBlueScore(s => Math.max(0, s + points));
+      }
+    } else if (type === 'penalty') {
+      // 'team' is the team that receives the point, so the other team gets the penalty
+      if (team === 'red') { // Blue team gets penalty
+        setBluePenalties(p => p + 1);
+        setRedScore(s => s + points);
+      } else { // Red team gets penalty
+        setRedPenalties(p => p + 1);
+        setBlueScore(s => s + points);
+      }
     }
 
     playSound('C4');
@@ -100,9 +115,9 @@ export default function TapScoreHubPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
-      <main className="flex-grow flex flex-col md:flex-row relative pb-28">
-        <ScorePanel team="red" score={redScore} />
-        <ScorePanel team="blue" score={blueScore} />
+      <main className="flex-grow flex flex-col md:flex-row relative">
+        <ScorePanel team="red" score={redScore} penalties={redPenalties} />
+        <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} />
 
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
           <Card className="w-48 h-48 p-2 flex flex-col gap-2 bg-card/80 backdrop-blur-sm pointer-events-auto">
