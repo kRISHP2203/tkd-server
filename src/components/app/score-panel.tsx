@@ -22,7 +22,7 @@ export default function ScorePanel({ team, score }: ScorePanelProps) {
     }
   }, [score, prevScore]);
 
-  const teamName = team.charAt(0).toUpperCase() + team.slice(1);
+  const teamName = team === 'red' ? 'Hong' : team.charAt(0).toUpperCase() + team.slice(1);
   const isRed = team === 'red';
   
   const panelClasses = cn(
