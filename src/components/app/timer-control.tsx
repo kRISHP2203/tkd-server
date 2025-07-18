@@ -32,44 +32,44 @@ export default function TimerControl({
   };
 
   return (
-    <Card className="bg-background/50 text-center">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl">Match Control</CardTitle>
-        <CardDescription>Round {currentRound} of {totalRounds}</CardDescription>
+    <Card className="bg-transparent border-0 shadow-none text-center">
+      <CardHeader className="p-1">
+        <CardTitle className="font-headline text-lg">Match Control</CardTitle>
+        <CardDescription className="text-xs">Round {currentRound} of {totalRounds}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col items-center gap-4">
-        <div className="font-headline font-bold text-8xl text-foreground/90 tabular-nums">
+      <CardContent className="p-1 flex flex-col items-center gap-2">
+        <div className="font-headline font-bold text-5xl text-foreground/90 tabular-nums">
           {formatTime(timeRemaining)}
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2 w-full max-w-sm">
+        <div className="grid grid-cols-3 gap-1 w-full">
           <Button
-            size="lg"
+            size="sm"
             onClick={onToggleTimer}
-            className="lg:col-span-1"
+            className="text-xs"
           >
-            {isTimerRunning ? <Pause className="mr-2 h-5 w-5" /> : <Play className="mr-2 h-5 w-5" />}
+            {isTimerRunning ? <Pause className="mr-1 h-3 w-3" /> : <Play className="mr-1 h-3 w-3" />}
             {isTimerRunning ? 'Pause' : 'Start'}
           </Button>
 
           <Button
-            size="lg"
+            size="sm"
             variant="secondary"
             onClick={onUndo}
             disabled={!canUndo}
-            className="lg:col-span-1"
+            className="text-xs"
           >
-            <Undo className="mr-2 h-5 w-5" />
+            <Undo className="mr-1 h-3 w-3" />
             Undo
           </Button>
           
           <Button
-            size="lg"
+            size="sm"
             variant="outline"
             onClick={onResetMatch}
-            className="col-span-2 lg:col-span-1"
+            className="text-xs"
           >
-            <RotateCcw className="mr-2 h-5 w-5" />
-            Reset Match
+            <RotateCcw className="mr-1 h-3 w-3" />
+            Reset
           </Button>
         </div>
       </CardContent>
