@@ -209,12 +209,12 @@ export default function TapScoreHubPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground p-4 font-body">
       <Header />
-      <main className="flex-grow flex flex-col md:flex-row gap-4 mt-4 relative">
+      <main className="flex-grow flex flex-col md:flex-row gap-4 mt-4 relative pb-40">
         <ScorePanel team="red" score={redScore} />
         <ScorePanel team="blue" score={blueScore} />
 
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-          <Card className="w-full max-w-md lg:max-w-lg p-4 flex flex-col gap-4 bg-card/80 backdrop-blur-sm pointer-events-auto">
+          <Card className="w-full max-w-sm p-4 flex flex-col gap-4 bg-card/80 backdrop-blur-sm pointer-events-auto">
             <CardContent className="p-0 flex-grow flex flex-col justify-between gap-4">
               <TimerControl
                 timeRemaining={timeRemaining}
@@ -227,11 +227,13 @@ export default function TapScoreHubPage() {
                 canUndo={history.length > 0}
               />
               <AdvantageDisplay result={advantageResult} isLoading={isAdvantageLoading} />
-              <RefereeControls referees={referees} onAction={handleRefereeAction} />
             </CardContent>
           </Card>
         </div>
       </main>
+      <footer className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-sm border-t border-border">
+          <RefereeControls referees={referees} onAction={handleRefereeAction} />
+      </footer>
     </div>
   );
 }

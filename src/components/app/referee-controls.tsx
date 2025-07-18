@@ -28,11 +28,11 @@ const ScoreButton = ({ team, points, refereeId, onAction }: { team: 'red' | 'blu
 
 export default function RefereeControls({ referees, onAction }: RefereeControlsProps) {
   return (
-    <Card className="bg-background/50">
-      <CardHeader>
+    <Card className="bg-transparent border-0 shadow-none">
+      <CardHeader className="p-0 pb-2">
         <CardTitle className="text-center font-headline text-lg">Referee Actions</CardTitle>
       </CardHeader>
-      <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <CardContent className="p-0 grid grid-cols-1 md:grid-cols-3 gap-4">
         {referees.map(ref => (
           <div key={ref.id} className="flex flex-col gap-3 p-3 rounded-lg border bg-card">
             <div className="flex items-center justify-between text-sm">
@@ -43,23 +43,19 @@ export default function RefereeControls({ referees, onAction }: RefereeControlsP
               </div>
             </div>
             <Separator />
-            <div className="flex flex-col gap-2">
-              <p className="text-center font-semibold text-destructive">Red</p>
-              <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-destructive w-12">Red</p>
                 <ScoreButton team="red" points={1} refereeId={ref.id} onAction={onAction} />
                 <ScoreButton team="red" points={2} refereeId={ref.id} onAction={onAction} />
                 <ScoreButton team="red" points={3} refereeId={ref.id} onAction={onAction} />
-              </div>
-               <Button size="sm" variant="outline" onClick={() => onAction(ref.id, 'blue', 1, 'penalty')}>Penalty</Button>
+                <Button size="sm" variant="outline" className="w-24" onClick={() => onAction(ref.id, 'blue', 1, 'penalty')}>Penalty</Button>
             </div>
-            <div className="flex flex-col gap-2">
-              <p className="text-center font-semibold text-primary">Blue</p>
-              <div className="flex gap-2">
-                <ScoreButton team="blue" points={1} refereeId={ref.id} onAction={onAction} />
-                <ScoreButton team="blue" points={2} refereeId={ref.id} onAction={onAction} />
-                <ScoreButton team="blue" points={3} refereeId={ref.id} onAction={onAction} />
-              </div>
-               <Button size="sm" variant="outline" onClick={() => onAction(ref.id, 'red', 1, 'penalty')}>Penalty</Button>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-primary w-12">Blue</p>
+              <ScoreButton team="blue" points={1} refereeId={ref.id} onAction={onAction} />
+              <ScoreButton team="blue" points={2} refereeId={ref.id} onAction={onAction} />
+              <ScoreButton team="blue" points={3} refereeId={ref.id} onAction={onAction} />
+              <Button size="sm" variant="outline" className="w-24" onClick={() => onAction(ref.id, 'red', 1, 'penalty')}>Penalty</Button>
             </div>
           </div>
         ))}
