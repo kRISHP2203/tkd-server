@@ -9,15 +9,11 @@ import { useToast } from "@/hooks/use-toast"
 import ScorePanel from '@/components/app/score-panel';
 import TimerControl from '@/components/app/timer-control';
 import JudgeControls from '@/components/app/judge-controls';
-import SettingsDialog from '@/components/app/settings-dialog';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Settings } from 'lucide-react';
+import type { GameSettings } from '@/app/settings/page';
 
-export type GameSettings = {
-  roundTime: number;
-  totalRounds: number;
-  leadPoints: number;
-  restTime: number;
-  maxGamJeom: number;
-};
 
 type Action = {
   type: 'score' | 'penalty';
@@ -45,7 +41,6 @@ export default function TapScoreHubPage() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [history, setHistory] = useState<Action[]>([]);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [matchState, setMatchState] = useState<MatchState>('idle');
   
   const synth = useRef<any>(null);
@@ -58,12 +53,14 @@ export default function TapScoreHubPage() {
       if (savedSettings) {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings(parsedSettings);
-        setTimeRemaining(parsedSettings.roundTime);
+        if (matchState === 'idle') {
+          setTimeRemaining(parsedSettings.roundTime);
+        }
       }
     } catch (error) {
       console.error("Failed to load settings from localStorage", error);
     }
-  }, []);
+  }, [matchState]);
 
 
   useEffect(() => {
@@ -76,7 +73,6 @@ export default function TapScoreHubPage() {
 
   const playSound = useCallback((note: string) => {
     if (synth.current && synth.current.context.state === 'running') {
-      // Stop any previous sound before starting a new one to avoid overlapping notes error.
       synth.current.triggerRelease();
       synth.current.triggerAttackRelease(note, '8n');
     }
@@ -114,7 +110,9 @@ export default function TapScoreHubPage() {
   const handleEndMatch = useCallback((winner: string) => {
     setIsTimerRunning(false);
     setMatchState('finished');
-    playSound('A5');
+    if (synth.current) {
+        playSound('A5');
+    }
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
@@ -184,10 +182,9 @@ export default function TapScoreHubPage() {
         setCurrentRound(r => r + 1);
         resetRound();
     } else {
-        setMatchState('finished');
-        setIsTimerRunning(false);
+        handleEndMatch('Nobody');
     }
-  }, [currentRound, settings.totalRounds, resetRound]);
+  }, [currentRound, settings.totalRounds, resetRound, handleEndMatch]);
   
   useEffect(() => {
       if (matchState === 'between_rounds') {
@@ -225,24 +222,20 @@ export default function TapScoreHubPage() {
     return () => clearInterval(timerInterval);
   }, [isTimerRunning, playSound, startNextRound, matchState]);
 
-  const handleSaveSettings = (newSettings: GameSettings) => {
-    setSettings(newSettings);
-    if(matchState === 'idle') {
-      setTimeRemaining(newSettings.roundTime);
-    }
-    try {
-      localStorage.setItem('gameSettings', JSON.stringify(newSettings));
-      toast({ title: "Settings Saved", description: "Your new match rules have been applied." });
-    } catch (error) {
-      toast({ title: "Error Saving Settings", description: "Could not save settings to local storage.", variant: "destructive" });
-    }
-    setIsSettingsOpen(false);
-  };
-  
-
   return (
     <>
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
+        
+        {matchState !== 'running' && (
+          <div className="absolute top-4 right-4 z-10">
+            <Link href="/settings">
+              <Button variant="outline" size="icon">
+                <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        )}
+
         <main className="flex-grow flex flex-col md:flex-row relative">
           <ScorePanel team="red" score={redScore} penalties={redPenalties} />
           <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} />
@@ -264,16 +257,10 @@ export default function TapScoreHubPage() {
         </main>
         {(matchState === 'paused' || matchState === 'idle' || matchState === 'between_rounds') && (
             <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
-                <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenSettings={() => setIsSettingsOpen(true)} />
+                <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} />
             </footer>
         )}
       </div>
-      <SettingsDialog
-        isOpen={isSettingsOpen}
-        onOpenChange={setIsSettingsOpen}
-        settings={settings}
-        onSave={handleSaveSettings}
-      />
     </>
   );
 }
