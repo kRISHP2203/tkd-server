@@ -2,6 +2,8 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
+import { Settings } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -12,6 +14,7 @@ import TimerControl from '@/components/app/timer-control';
 import JudgeControls from '@/components/app/judge-controls';
 import type { GameSettings } from '@/components/app/game-options-dialog';
 import GameOptionsDialog from '@/components/app/game-options-dialog';
+import { Button } from '@/components/ui/button';
 
 
 type Action = {
@@ -81,7 +84,6 @@ export default function TapScoreHubPage() {
 
   const playSound = useCallback((note: string) => {
     if (synth.current && synth.current.context.state === 'running') {
-      // Ensure the audio context is ready and stop any previous note to prevent errors.
       synth.current.triggerRelease();
       synth.current.triggerAttackRelease(note, '8n');
     }
@@ -127,7 +129,7 @@ export default function TapScoreHubPage() {
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (matchState === 'running') return;
+    if (isTimerRunning) return;
 
     const action: Action = { team, points, type };
     
@@ -159,7 +161,7 @@ export default function TapScoreHubPage() {
     playSound('C4');
     setHistory(h => [...h, action]);
 
-  }, [matchState, playSound, settings.maxGamJeom, handleEndMatch]);
+  }, [isTimerRunning, playSound, settings.maxGamJeom, handleEndMatch]);
 
   useEffect(() => {
     if (matchState === 'finished') {
@@ -237,6 +239,15 @@ export default function TapScoreHubPage() {
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         
         <main className="flex-grow flex flex-col md:flex-row relative">
+          {!isTimerRunning && (
+            <div className="absolute top-4 right-4 z-10">
+              <Link href="/settings">
+                <Button variant="ghost" size="icon">
+                  <Settings className="h-6 w-6 text-foreground/80" />
+                </Button>
+              </Link>
+            </div>
+          )}
           <ScorePanel team="red" score={redScore} penalties={redPenalties} />
           <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} />
 
