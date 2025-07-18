@@ -209,27 +209,28 @@ export default function TapScoreHubPage() {
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground p-4 font-body">
       <Header />
-      <main className="flex-grow flex flex-col md:flex-row gap-4 mt-4">
+      <main className="flex-grow flex flex-col md:flex-row gap-4 mt-4 relative">
         <ScorePanel team="red" score={redScore} />
-
-        <Card className="flex-grow md:flex-grow-0 md:w-1/2 lg:w-2/5 order-first md:order-none p-4 md:p-6 flex flex-col gap-4 bg-card/80 backdrop-blur-sm">
-          <CardContent className="p-0 flex-grow flex flex-col justify-between gap-4">
-            <TimerControl
-              timeRemaining={timeRemaining}
-              isTimerRunning={isTimerRunning}
-              currentRound={currentRound}
-              totalRounds={TOTAL_ROUNDS}
-              onToggleTimer={handleTimerToggle}
-              onResetMatch={resetMatch}
-              onUndo={handleUndo}
-              canUndo={history.length > 0}
-            />
-            <AdvantageDisplay result={advantageResult} isLoading={isAdvantageLoading} />
-            <RefereeControls referees={referees} onAction={handleRefereeAction} />
-          </CardContent>
-        </Card>
-
         <ScorePanel team="blue" score={blueScore} />
+
+        <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+          <Card className="w-full max-w-md lg:max-w-lg p-4 flex flex-col gap-4 bg-card/80 backdrop-blur-sm pointer-events-auto">
+            <CardContent className="p-0 flex-grow flex flex-col justify-between gap-4">
+              <TimerControl
+                timeRemaining={timeRemaining}
+                isTimerRunning={isTimerRunning}
+                currentRound={currentRound}
+                totalRounds={TOTAL_ROUNDS}
+                onToggleTimer={handleTimerToggle}
+                onResetMatch={resetMatch}
+                onUndo={handleUndo}
+                canUndo={history.length > 0}
+              />
+              <AdvantageDisplay result={advantageResult} isLoading={isAdvantageLoading} />
+              <RefereeControls referees={referees} onAction={handleRefereeAction} />
+            </CardContent>
+          </Card>
+        </div>
       </main>
     </div>
   );
