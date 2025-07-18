@@ -35,7 +35,7 @@ export default function TimerControl({
         <div className="font-headline font-bold text-5xl text-foreground/90 tabular-nums">
           {formatTime(timeRemaining)}
         </div>
-        <div className="grid grid-cols-1 gap-1 w-full">
+        <div className="flex justify-center gap-1 w-full">
           <Button
             size="icon"
             onClick={onToggleTimer}
