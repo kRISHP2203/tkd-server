@@ -24,6 +24,8 @@ type Action = {
   points: number;
 };
 
+type MatchState = 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
+
 const defaultSettings: GameSettings = {
   roundTime: 120, // 2 minutes
   totalRounds: 3,
@@ -42,6 +44,7 @@ export default function TapScoreHubPage() {
   const [currentRound, setCurrentRound] = useState(1);
   const [history, setHistory] = useState<Action[]>([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [matchState, setMatchState] = useState<MatchState>('idle');
   
   const synth = useRef<any>(null);
   const { toast } = useToast()
@@ -90,6 +93,7 @@ export default function TapScoreHubPage() {
     setBluePenalties(0);
     setCurrentRound(1);
     setHistory([]);
+    setMatchState('idle');
     toast({ title: "Match Reset", description: "The match has been reset to its initial state." });
   }, [resetRound, toast]);
   
@@ -122,6 +126,7 @@ export default function TapScoreHubPage() {
 
   const handleEndMatch = useCallback((winner: string) => {
     setIsTimerRunning(false);
+    setMatchState('finished');
     playSound('A5');
     toast({
       title: "Match Over!",
@@ -141,40 +146,53 @@ export default function TapScoreHubPage() {
   }, [redScore, blueScore, isTimerRunning, settings.leadPoints, handleEndMatch]);
   
   const startNextRound = useCallback(() => {
+    setMatchState('between_rounds');
     setCurrentRound(r => r + 1);
     resetRound();
-    toast({
-        title: `Starting Round ${currentRound + 1}`,
-        description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
-    });
-    setTimeout(() => {
-      setIsTimerRunning(true);
-    }, settings.restTime * 1000);
-  }, [currentRound, resetRound, settings.restTime, toast]);
-
+  }, [resetRound]);
+  
+  useEffect(() => {
+      if (matchState === 'between_rounds') {
+          toast({
+              title: `Starting Round ${currentRound}`,
+              description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
+          });
+          const timer = setTimeout(() => {
+            setIsTimerRunning(true);
+            setMatchState('running');
+          }, settings.restTime * 1000);
+          return () => clearTimeout(timer);
+      }
+  }, [matchState, currentRound, settings.restTime, toast]);
 
   useEffect(() => {
-    if (!isTimerRunning) return;
+    if (!isTimerRunning) {
+        if (matchState === 'finished') {
+             toast({ title: "Match Over", description: "The final round has concluded." });
+        }
+      return;
+    }
 
     const timerInterval = setInterval(() => {
       setTimeRemaining(prevTime => {
         if (prevTime > 1) {
           return prevTime - 1;
         }
+        
         // End of round
         playSound('G5');
         setIsTimerRunning(false);
         if (currentRound < settings.totalRounds) {
           startNextRound();
         } else {
-            toast({ title: "Match Over", description: "The final round has concluded." });
+          setMatchState('finished');
         }
         return 0;
       });
     }, 1000);
 
     return () => clearInterval(timerInterval);
-  }, [isTimerRunning, currentRound, playSound, resetRound, settings.totalRounds, startNextRound, toast]);
+  }, [isTimerRunning, currentRound, playSound, settings.totalRounds, startNextRound, toast, matchState]);
 
   const handleSaveSettings = (newSettings: GameSettings) => {
     setSettings(newSettings);
