@@ -40,6 +40,7 @@ export default function TapScoreHubPage() {
   const [redPenalties, setRedPenalties] = useState(0);
   const [bluePenalties, setBluePenalties] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(settings.roundTime);
+  const [restTimeRemaining, setRestTimeRemaining] = useState(settings.restTime);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [currentRound, setCurrentRound] = useState(1);
   const [history, setHistory] = useState<Action[]>([]);
@@ -58,6 +59,7 @@ export default function TapScoreHubPage() {
         setSettings(parsedSettings);
         if (matchState === 'idle') {
           setTimeRemaining(parsedSettings.roundTime);
+          setRestTimeRemaining(parsedSettings.restTime);
         }
       }
     } catch (error) {
@@ -69,6 +71,7 @@ export default function TapScoreHubPage() {
     setSettings(newSettings);
     if (matchState === 'idle') {
       setTimeRemaining(newSettings.roundTime);
+      setRestTimeRemaining(newSettings.restTime);
     }
     setIsOptionsDialogOpen(false);
   };
@@ -103,7 +106,9 @@ export default function TapScoreHubPage() {
           setMatchState('running');
         }
       } else {
-        setMatchState('paused');
+        if(matchState === 'running') {
+          setMatchState('paused');
+        }
       }
       return newIsRunning;
     });
@@ -111,8 +116,9 @@ export default function TapScoreHubPage() {
 
   const resetRound = useCallback(() => {
     setTimeRemaining(settings.roundTime);
+    setRestTimeRemaining(settings.restTime);
     setIsTimerRunning(false);
-  }, [settings.roundTime]);
+  }, [settings.roundTime, settings.restTime]);
 
   const resetMatch = useCallback(() => {
     resetRound();
@@ -205,20 +211,31 @@ export default function TapScoreHubPage() {
     }
   }, [currentRound, settings.totalRounds, resetRound, handleEndMatch]);
   
+  // Handles the rest period timer
   useEffect(() => {
-      if (matchState === 'between_rounds') {
-          toast({
-              title: `Starting Round ${currentRound}`,
-              description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
-          });
-          const timer = setTimeout(() => {
-            setMatchState('running');
-            setIsTimerRunning(true);
-          }, settings.restTime * 1000);
-          return () => clearTimeout(timer);
-      }
-  }, [matchState, currentRound, settings.restTime, toast]);
+    if (matchState === 'between_rounds') {
+      toast({
+        title: `Round Over`,
+        description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
+      });
 
+      const timerInterval = setInterval(() => {
+        setRestTimeRemaining(prevTime => {
+          if (prevTime > 1) {
+            return prevTime - 1;
+          }
+          // End of rest period
+          setMatchState('running');
+          setIsTimerRunning(true);
+          return 0;
+        });
+      }, 1000);
+
+      return () => clearInterval(timerInterval);
+    }
+  }, [matchState, settings.restTime, toast]);
+
+  // Handles the main round timer
   useEffect(() => {
     if (!isTimerRunning || matchState !== 'running') {
       return;
@@ -245,6 +262,12 @@ export default function TapScoreHubPage() {
   const redWinner = isFinished && redScore > blueScore;
   const blueWinner = isFinished && blueScore > redScore;
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <>
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
@@ -262,7 +285,7 @@ export default function TapScoreHubPage() {
           <ScorePanel team="red" score={redScore} penalties={redPenalties} isWinner={redWinner} />
           <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} isWinner={blueWinner} />
 
-          <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
             <Card className="w-48 p-2 flex flex-col gap-2 bg-card/80 backdrop-blur-sm pointer-events-auto">
               <CardContent className="p-0 flex-grow flex flex-col justify-center gap-2">
                 <TimerControl
@@ -275,6 +298,13 @@ export default function TapScoreHubPage() {
                 />
               </CardContent>
             </Card>
+            {matchState === 'between_rounds' && (
+              <Card className="mt-2 w-auto px-4 py-1 bg-background/90 backdrop-blur-sm pointer-events-auto">
+                <p className="text-sm font-medium text-foreground">
+                  Rest: {formatTime(restTimeRemaining)}
+                </p>
+              </Card>
+            )}
           </div>
         </main>
         {(matchState === 'paused' || matchState === 'idle' || matchState === 'between_rounds' || matchState === 'finished') && (
