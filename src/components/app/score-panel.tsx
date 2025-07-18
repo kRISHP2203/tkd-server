@@ -14,30 +14,30 @@ export default function ScorePanel({ team, score }: ScorePanelProps) {
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
   useEffect(() => {
-    if (score > prevScore) {
+    if (score !== prevScore) {
       setShouldAnimate(true);
       const timer = setTimeout(() => setShouldAnimate(false), 500);
+      setPrevScore(score);
       return () => clearTimeout(timer);
     }
-    setPrevScore(score);
   }, [score, prevScore]);
 
   const teamName = team.charAt(0).toUpperCase() + team.slice(1);
   const isRed = team === 'red';
   
   const panelClasses = cn(
-    'flex-grow flex flex-col transition-all duration-300',
-    isRed ? 'bg-destructive/10 border-destructive/50' : 'bg-primary/10 border-primary/50'
+    'flex-grow flex flex-col transition-all duration-300 border-0',
+    isRed ? 'bg-destructive' : 'bg-primary'
   );
 
   const titleClasses = cn(
     'font-headline text-4xl md:text-5xl font-bold',
-    isRed ? 'text-destructive' : 'text-primary'
+    isRed ? 'text-destructive-foreground' : 'text-primary-foreground'
   );
 
   const scoreClasses = cn(
     'font-headline font-bold text-7xl md:text-9xl transition-transform duration-200 ease-out',
-    isRed ? 'text-destructive/90' : 'text-primary/90',
+    isRed ? 'text-destructive-foreground/90' : 'text-primary-foreground/90',
     shouldAnimate && 'scale-110'
   );
 
