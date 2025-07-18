@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -10,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { Copy, Wifi, Users, Server, AlertTriangle, Info } from 'lucide-react';
+import { Copy, Wifi, Users, Server, AlertTriangle, Info, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 type ConnectionMode = 'websocket' | 'udp';
@@ -76,7 +77,10 @@ export default function SettingsPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4 font-body">
-      <Card className="w-full max-w-2xl">
+      <Card className="w-full max-w-2xl relative">
+        <Link href="/" className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+            <X className="h-6 w-6" />
+        </Link>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wifi className="h-6 w-6" />
