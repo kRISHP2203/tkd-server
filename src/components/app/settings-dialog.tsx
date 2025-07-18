@@ -133,7 +133,7 @@ export default function SettingsDialog({ isOpen, onOpenChange, settings, onSave 
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="maxGamJeom" className="text-right">
-              Max Penalties
+              Max Gam Jeom
             </Label>
              <Controller
               name="maxGamJeom"
