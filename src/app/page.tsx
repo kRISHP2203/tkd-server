@@ -33,7 +33,7 @@ const defaultSettings: GameSettings = {
   maxGamJeom: 5,
 };
 
-export default function TapScoreHubPage() {
+export default function TapScoreHubPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined }}) {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [redScore, setRedScore] = useState(0);
   const [blueScore, setBlueScore] = useState(0);
@@ -82,12 +82,14 @@ export default function TapScoreHubPage() {
     });
   }, []);
 
-  const playSound = useCallback((note: string) => {
+  const playSound = useCallback((note: string, delay?: number) => {
     if (synth.current && synth.current.context.state === 'running') {
-      synth.current.triggerRelease();
-      synth.current.triggerAttackRelease(note, '8n');
+        // Ensure the audio context is ready and stop any previous note to prevent errors.
+        synth.current.triggerRelease();
+        synth.current.triggerAttackRelease(note, '8n', delay);
     }
   }, []);
+  
 
   const handleTimerToggle = useCallback(() => {
     setIsTimerRunning(prev => {
@@ -129,7 +131,7 @@ export default function TapScoreHubPage() {
   }, [playSound]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-    if (isTimerRunning) return;
+    if (matchState === 'running' || matchState === 'finished') return;
 
     const action: Action = { team, points, type };
     
@@ -161,7 +163,7 @@ export default function TapScoreHubPage() {
     playSound('C4');
     setHistory(h => [...h, action]);
 
-  }, [isTimerRunning, playSound, settings.maxGamJeom, handleEndMatch]);
+  }, [matchState, playSound, settings.maxGamJeom, handleEndMatch]);
 
   useEffect(() => {
     if (matchState === 'finished') {
@@ -180,14 +182,14 @@ export default function TapScoreHubPage() {
 
 
   useEffect(() => {
-    if (isTimerRunning) {
+    if (isTimerRunning && matchState === 'running') {
       if (redScore - blueScore >= settings.leadPoints) {
         handleEndMatch('Hong (Red)');
       } else if (blueScore - redScore >= settings.leadPoints) {
         handleEndMatch('Chong (Blue)');
       }
     }
-  }, [redScore, blueScore, isTimerRunning, settings.leadPoints, handleEndMatch]);
+  }, [redScore, blueScore, isTimerRunning, matchState, settings.leadPoints, handleEndMatch]);
   
   const startNextRound = useCallback(() => {
     if (currentRound < settings.totalRounds) {
@@ -239,7 +241,7 @@ export default function TapScoreHubPage() {
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         
         <main className="flex-grow flex flex-col md:flex-row relative">
-          {!isTimerRunning && (
+          {(matchState === 'idle' || matchState === 'paused') && (
             <div className="absolute top-4 right-4 z-10">
               <Link href="/settings">
                 <Button variant="ghost" size="icon">
