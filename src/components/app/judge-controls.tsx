@@ -33,7 +33,7 @@ export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsP
             Restart Game
         </Button>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex-grow flex items-center justify-center gap-4">
             {/* Red Team Controls */}
             <div className="flex items-center gap-3">
                 <span className="font-bold font-headline text-destructive text-sm">RED</span>
