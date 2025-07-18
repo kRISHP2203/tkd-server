@@ -33,7 +33,7 @@ const defaultSettings: GameSettings = {
   maxGamJeom: 5,
 };
 
-export default function TapScoreHubPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined }}) {
+export default function TapScoreHubPage() {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [redScore, setRedScore] = useState(0);
   const [blueScore, setBlueScore] = useState(0);
