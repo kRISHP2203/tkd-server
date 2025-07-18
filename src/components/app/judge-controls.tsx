@@ -3,7 +3,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Settings } from 'lucide-react';
 
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
@@ -56,8 +55,8 @@ export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }
             <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
         </div>
 
-        <Button variant="outline" size="icon" onClick={onOpenSettings}>
-            <Settings className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={onOpenSettings}>
+            Game Options
         </Button>
       </CardContent>
     </Card>
