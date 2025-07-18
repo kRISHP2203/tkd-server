@@ -8,16 +8,16 @@ interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
 }
 
-const ScoreButton = ({ team, points, onAction }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction'] }) => (
-  <Button
-    size="sm"
-    variant={team === 'red' ? 'destructive' : 'default'}
-    className="flex-1"
-    onClick={() => onAction(team, points, 'score')}
-  >
-    +{points}
-  </Button>
-);
+const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
+    <Button
+      size="sm"
+      variant={team === 'red' ? 'destructive' : 'default'}
+      className="flex-1"
+      onClick={() => onAction(team, points, 'score')}
+    >
+      {children}
+    </Button>
+  );
 
 export default function JudgeControls({ onAction }: JudgeControlsProps) {
   return (
@@ -27,12 +27,11 @@ export default function JudgeControls({ onAction }: JudgeControlsProps) {
         <div className="flex items-center gap-3">
             <span className="font-bold font-headline text-destructive text-sm">RED</span>
             <div className="flex items-center gap-1">
-                <ScoreButton team="red" points={1} onAction={onAction} />
-                <ScoreButton team="red" points={2} onAction={onAction} />
-                <ScoreButton team="red" points={3} onAction={onAction} />
+                <ActionButton team="red" points={1} onAction={onAction}>+1</ActionButton>
+                <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
             </div>
             <Separator orientation="vertical" className="h-6" />
-            <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>Penalty</Button>
+            <Button size="sm" variant="outline" onClick={() => onAction('blue', 1, 'penalty')}>gam-jeom</Button>
         </div>
 
         <Separator orientation="vertical" className="h-10" />
@@ -41,12 +40,11 @@ export default function JudgeControls({ onAction }: JudgeControlsProps) {
         <div className="flex items-center gap-3">
              <span className="font-bold font-headline text-primary text-sm">BLUE</span>
              <div className="flex items-center gap-1">
-                <ScoreButton team="blue" points={1} onAction={onAction} />
-                <ScoreButton team="blue" points={2} onAction={onAction} />
-                <ScoreButton team="blue" points={3} onAction={onAction} />
+                <ActionButton team="blue" points={1} onAction={onAction}>+1</ActionButton>
+                <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
             </div>
             <Separator orientation="vertical" className="h-6" />
-            <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>Penalty</Button>
+            <Button size="sm" variant="outline" onClick={() => onAction('red', 1, 'penalty')}>gam-jeom</Button>
         </div>
       </CardContent>
     </Card>
