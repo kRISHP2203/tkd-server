@@ -25,7 +25,7 @@ const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blu
 export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }: JudgeControlsProps) {
   return (
     <Card className="bg-transparent border-0 shadow-none max-w-5xl mx-auto">
-      <CardContent className="p-2 flex items-center justify-around gap-4 rounded-lg border bg-card/80">
+      <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card/80">
         <Button
             variant="outline"
             onClick={onResetMatch}
