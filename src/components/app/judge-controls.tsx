@@ -8,6 +8,7 @@ import { Settings } from 'lucide-react';
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
   onResetMatch: () => void;
+  onOpenSettings: () => void;
 }
 
 const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
@@ -21,7 +22,7 @@ const ActionButton = ({ team, points, onAction, children }: { team: 'red' | 'blu
     </Button>
   );
 
-export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsProps) {
+export default function JudgeControls({ onAction, onResetMatch, onOpenSettings }: JudgeControlsProps) {
   return (
     <Card className="bg-transparent border-0 shadow-none max-w-4xl mx-auto">
       <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card/80">
@@ -59,7 +60,7 @@ export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsP
             </div>
         </div>
 
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" onClick={onOpenSettings}>
             <Settings className="mr-2 h-4 w-4" />
             Settings
         </Button>
