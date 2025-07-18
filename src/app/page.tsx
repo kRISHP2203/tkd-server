@@ -214,7 +214,7 @@ export default function TapScoreHubPage() {
         <ScorePanel team="blue" score={blueScore} />
 
         <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-          <Card className="w-full max-w-sm p-4 flex flex-col gap-4 bg-card/80 backdrop-blur-sm pointer-events-auto">
+          <Card className="w-64 h-64 p-4 flex flex-col gap-4 bg-card/80 backdrop-blur-sm pointer-events-auto">
             <CardContent className="p-0 flex-grow flex flex-col justify-between gap-4">
               <TimerControl
                 timeRemaining={timeRemaining}
