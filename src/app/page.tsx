@@ -90,6 +90,7 @@ export default function TapScoreHubPage() {
       if (synth.current.context.state !== 'running') {
         synth.current.context.resume();
       }
+      // Cancel any previously scheduled sound events before playing a new one.
       synth.current.context.transport.cancel();
       synth.current.triggerAttackRelease(note, '8n', delay);
     }
@@ -277,7 +278,7 @@ export default function TapScoreHubPage() {
       <div className="flex flex-col min-h-screen bg-background text-foreground font-body">
         
         <main className="flex-grow flex flex-col md:flex-row relative">
-          {(matchState === 'idle' || matchState === 'paused') && (
+          {(matchState === 'idle' || matchState === 'paused' || matchState === 'finished') && (
             <div className="absolute top-4 right-4 z-10">
               <Link href="/settings">
                 <Button variant="ghost" size="icon">
