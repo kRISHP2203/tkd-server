@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
@@ -27,13 +28,13 @@ export default function TimerControl({
 
   return (
     <Card className="bg-transparent border-0 shadow-none text-center">
-      <CardHeader className="p-1">
-        <CardDescription className="text-xs">Round {currentRound} of {totalRounds}</CardDescription>
-      </CardHeader>
       <CardContent className="p-1 flex flex-col items-center gap-2">
         <div className="font-headline font-bold text-5xl text-foreground/90 tabular-nums">
           {formatTime(timeRemaining)}
         </div>
+        <CardDescription className="text-xs">
+          {currentRound} ({totalRounds})
+        </CardDescription>
         <div className="flex justify-center gap-1 w-full">
           <Button
             size="icon"
