@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Settings } from 'lucide-react';
 
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
@@ -58,7 +59,10 @@ export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsP
             </div>
         </div>
 
-        <div className="w-8"></div>
+        <Button variant="outline" size="sm">
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+        </Button>
       </CardContent>
     </Card>
   );
