@@ -16,6 +16,7 @@ export type GameSettings = {
   totalRounds: number;
   leadPoints: number;
   restTime: number;
+  maxGamJeom: number;
 };
 
 type Action = {
@@ -30,7 +31,8 @@ const defaultSettings: GameSettings = {
   roundTime: 120, // 2 minutes
   totalRounds: 3,
   leadPoints: 20,
-  restTime: 30
+  restTime: 30,
+  maxGamJeom: 5,
 };
 
 export default function TapScoreHubPage() {
@@ -104,6 +106,12 @@ export default function TapScoreHubPage() {
     toast({ title: "Match Reset", description: "The match has been reset to its initial state." });
   }, [resetRound, toast]);
   
+  const handleEndMatch = useCallback((winner: string) => {
+    setIsTimerRunning(false);
+    setMatchState('finished');
+    playSound('A5');
+  }, [playSound]);
+  
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
     if (isTimerRunning) return;
 
@@ -118,10 +126,18 @@ export default function TapScoreHubPage() {
     } else if (type === 'penalty') {
       // 'team' is the team that receives the point, so the other team gets the penalty
       if (team === 'red') { // Blue team gets penalty
-        setBluePenalties(p => p + 1);
+        setBluePenalties(p => {
+            const newPenalties = p + 1;
+            if(newPenalties >= settings.maxGamJeom) handleEndMatch('Hong (Red)');
+            return newPenalties;
+        });
         setRedScore(s => s + points);
       } else { // Red team gets penalty
-        setRedPenalties(p => p + 1);
+        setRedPenalties(p => {
+            const newPenalties = p + 1;
+            if (newPenalties >= settings.maxGamJeom) handleEndMatch('Chong (Blue)');
+            return newPenalties;
+        });
         setBlueScore(s => s + points);
       }
     }
@@ -129,13 +145,7 @@ export default function TapScoreHubPage() {
     playSound('C4');
     setHistory(h => [...h, action]);
 
-  }, [isTimerRunning, playSound]);
-
-  const handleEndMatch = useCallback((winner: string) => {
-    setIsTimerRunning(false);
-    setMatchState('finished');
-    playSound('A5');
-  }, [playSound]);
+  }, [isTimerRunning, playSound, settings.maxGamJeom, handleEndMatch]);
 
   useEffect(() => {
     if (matchState === 'finished') {

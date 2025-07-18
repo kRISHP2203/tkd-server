@@ -21,6 +21,7 @@ const settingsSchema = z.object({
   totalRounds: z.number().min(1, "There must be at least 1 round."),
   leadPoints: z.number().min(1, "Lead points must be at least 1."),
   restTime: z.number().min(10, "Rest time must be at least 10 seconds."),
+  maxGamJeom: z.number().min(1, "Max penalties must be at least 1."),
 });
 
 interface SettingsDialogProps {
@@ -129,6 +130,25 @@ export default function SettingsDialog({ isOpen, onOpenChange, settings, onSave 
               )}
             />
             {errors.restTime && <p className="col-span-4 text-destructive text-sm text-right">{errors.restTime.message}</p>}
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="maxGamJeom" className="text-right">
+              Max Penalties
+            </Label>
+             <Controller
+              name="maxGamJeom"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  id="maxGamJeom"
+                  type="number"
+                  {...field}
+                  onChange={e => field.onChange(parseInt(e.target.value, 10) || 0)}
+                  className="col-span-3"
+                />
+              )}
+            />
+            {errors.maxGamJeom && <p className="col-span-4 text-destructive text-sm text-right">{errors.maxGamJeom.message}</p>}
           </div>
           <DialogFooter>
             <Button type="submit">Save Changes</Button>
