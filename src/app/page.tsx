@@ -256,7 +256,9 @@ export default function TapScoreHubPage() {
         // End of round
         playSound('G5');
         setIsTimerRunning(false);
-        startNextRound();
+        setTimeout(() => {
+          startNextRound();
+        }, 2000); // Wait 2 seconds before starting next round
         return 0;
       });
     }, 1000);
@@ -281,11 +283,9 @@ export default function TapScoreHubPage() {
         <main className="flex-grow flex flex-col md:flex-row relative">
           
             <div className="absolute top-4 right-4 z-10">
-              <Link href="/settings">
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon" onClick={() => setIsOptionsDialogOpen(true)}>
                   <Settings className="h-6 w-6 text-foreground/80" />
                 </Button>
-              </Link>
             </div>
           
           <ScorePanel team="red" score={redScore} penalties={redPenalties} isWinner={redWinner} />
@@ -328,3 +328,4 @@ export default function TapScoreHubPage() {
     </>
   );
 }
+
