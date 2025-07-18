@@ -73,8 +73,7 @@ export default function TapScoreHubPage() {
   }, []);
 
   const playSound = useCallback((note: string) => {
-    if (synth.current) {
-      // Stop any previous sound before starting a new one to avoid overlapping notes error.
+    if (synth.current && synth.current.context.state === 'running') {
       synth.current.triggerRelease();
       synth.current.triggerAttackRelease(note, '8n');
     }
