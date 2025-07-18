@@ -12,7 +12,8 @@ import JudgeControls from '@/components/app/judge-controls';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Settings } from 'lucide-react';
-import type { GameSettings } from '@/app/settings/page';
+import type { GameSettings } from '@/components/app/game-options-dialog';
+import GameOptionsDialog from '@/components/app/game-options-dialog';
 
 
 type Action = {
@@ -42,6 +43,7 @@ export default function TapScoreHubPage() {
   const [currentRound, setCurrentRound] = useState(1);
   const [history, setHistory] = useState<Action[]>([]);
   const [matchState, setMatchState] = useState<MatchState>('idle');
+  const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
   
   const synth = useRef<any>(null);
   const { toast } = useToast()
@@ -61,6 +63,13 @@ export default function TapScoreHubPage() {
       console.error("Failed to load settings from localStorage", error);
     }
   }, [matchState]);
+
+  const handleSettingsSave = (newSettings: GameSettings) => {
+    setSettings(newSettings);
+    if (matchState === 'idle') {
+      setTimeRemaining(newSettings.roundTime);
+    }
+  };
 
 
   useEffect(() => {
@@ -178,9 +187,9 @@ export default function TapScoreHubPage() {
   
   const startNextRound = useCallback(() => {
     if (currentRound < settings.totalRounds) {
-        setMatchState('between_rounds');
         setCurrentRound(r => r + 1);
         resetRound();
+        setMatchState('between_rounds');
     } else {
         handleEndMatch('Nobody');
     }
@@ -193,8 +202,8 @@ export default function TapScoreHubPage() {
               description: `Get ready! The next round will begin in ${settings.restTime} seconds.`,
           });
           const timer = setTimeout(() => {
-            setMatchState('running');
             setIsTimerRunning(true);
+            setMatchState('running');
           }, settings.restTime * 1000);
           return () => clearTimeout(timer);
       }
@@ -228,11 +237,9 @@ export default function TapScoreHubPage() {
         
         {matchState !== 'running' && (
           <div className="absolute top-4 right-4 z-10">
-            <Link href="/settings">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" aria-label="App Settings">
                 <Settings className="h-4 w-4" />
               </Button>
-            </Link>
           </div>
         )}
 
@@ -257,10 +264,16 @@ export default function TapScoreHubPage() {
         </main>
         {(matchState === 'paused' || matchState === 'idle' || matchState === 'between_rounds') && (
             <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
-                <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} />
+                <JudgeControls onAction={handleJudgeAction} onResetMatch={resetMatch} onOpenOptions={() => setIsOptionsDialogOpen(true)} />
             </footer>
         )}
       </div>
+      <GameOptionsDialog 
+        isOpen={isOptionsDialogOpen}
+        onOpenChange={setIsOptionsDialogOpen}
+        initialSettings={settings}
+        onSave={handleSettingsSave}
+      />
     </>
   );
 }

@@ -8,6 +8,7 @@ import { Settings } from 'lucide-react';
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
   onResetMatch: () => void;
+  onOpenOptions: () => void;
 }
 
 const ActionButton = ({ team, points, onAction, children, type = 'score' }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode, type?: 'score' | 'penalty' }) => (
@@ -32,7 +33,7 @@ const ActionButton = ({ team, points, onAction, children, type = 'score' }: { te
     </Button>
   );
 
-export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsProps) {
+export default function JudgeControls({ onAction, onResetMatch, onOpenOptions }: JudgeControlsProps) {
   return (
     <Card className="bg-transparent border-0 shadow-none max-w-5xl mx-auto">
       <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card/80">
@@ -73,6 +74,13 @@ export default function JudgeControls({ onAction, onResetMatch }: JudgeControlsP
                 <PenaltyButton team="red" points={-1} onAction={onAction}>-1</PenaltyButton>
             </div>
         </div>
+        <Button
+            variant="outline"
+            onClick={onOpenOptions}
+            size="sm"
+          >
+            Game Options
+        </Button>
       </CardContent>
     </Card>
   );

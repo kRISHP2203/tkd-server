@@ -1,16 +1,15 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardFooter,
-} from '@/components/ui/card';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,29 +34,15 @@ const settingsSchema = z.object({
   maxGamJeom: z.number().min(1, "Max penalties must be at least 1."),
 });
 
-const defaultSettings: GameSettings = {
-  roundTime: 120,
-  totalRounds: 3,
-  leadPoints: 20,
-  restTime: 30,
-  maxGamJeom: 5,
-};
+interface GameOptionsDialogProps {
+    isOpen: boolean;
+    onOpenChange: (isOpen: boolean) => void;
+    initialSettings: GameSettings;
+    onSave: (settings: GameSettings) => void;
+}
 
-export default function SettingsPage() {
-  const router = useRouter();
+export default function GameOptionsDialog({ isOpen, onOpenChange, initialSettings, onSave }: GameOptionsDialogProps) {
   const { toast } = useToast();
-  const [initialSettings, setInitialSettings] = useState<GameSettings>(defaultSettings);
-
-  useEffect(() => {
-    try {
-      const savedSettings = localStorage.getItem('gameSettings');
-      if (savedSettings) {
-        setInitialSettings(JSON.parse(savedSettings));
-      }
-    } catch (error) {
-      console.error("Failed to load settings from localStorage", error);
-    }
-  }, []);
 
   const {
     control,
@@ -70,30 +55,33 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    reset(initialSettings);
-  }, [initialSettings, reset]);
+    if (isOpen) {
+        reset(initialSettings);
+    }
+  }, [isOpen, initialSettings, reset]);
 
-  const onSave = (data: GameSettings) => {
+  const handleSave = (data: GameSettings) => {
     try {
       localStorage.setItem('gameSettings', JSON.stringify(data));
+      onSave(data);
       toast({ title: "Settings Saved", description: "Your new match rules have been applied." });
-      router.push('/');
+      onOpenChange(false);
     } catch (error) {
       toast({ title: "Error Saving Settings", description: "Could not save settings to local storage.", variant: "destructive" });
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-background">
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Game Settings</CardTitle>
-          <CardDescription>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Game Options</DialogTitle>
+          <DialogDescription>
             Configure the rules for the match. Changes will be saved for future matches.
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSave)}>
-          <CardContent className="grid gap-4 py-4">
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(handleSave)}>
+          <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="roundTime" className="text-right">
                 Round Time (s)
@@ -189,15 +177,17 @@ export default function SettingsPage() {
               />
               {errors.maxGamJeom && <p className="col-span-4 text-destructive text-sm text-right">{errors.maxGamJeom.message}</p>}
             </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => router.push('/')}>
-              Cancel
-            </Button>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+                <Button variant="outline" type="button">
+                    Cancel
+                </Button>
+            </DialogClose>
             <Button type="submit">Save Changes</Button>
-          </CardFooter>
+          </DialogFooter>
         </form>
-      </Card>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
