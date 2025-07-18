@@ -43,33 +43,30 @@ export default function TimerControl({
         </div>
         <div className="grid grid-cols-3 gap-1 w-full">
           <Button
-            size="sm"
+            size="icon"
             onClick={onToggleTimer}
-            className="text-xs"
+            className="text-xs h-8 w-8"
           >
-            {isTimerRunning ? <Pause className="mr-1 h-3 w-3" /> : <Play className="mr-1 h-3 w-3" />}
-            {isTimerRunning ? 'Pause' : 'Start'}
+            {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
 
           <Button
-            size="sm"
+            size="icon"
             variant="secondary"
             onClick={onUndo}
             disabled={!canUndo}
-            className="text-xs"
+            className="text-xs h-8 w-8"
           >
-            <Undo className="mr-1 h-3 w-3" />
-            Undo
+            <Undo className="h-4 w-4" />
           </Button>
           
           <Button
-            size="sm"
+            size="icon"
             variant="outline"
             onClick={onResetMatch}
-            className="text-xs"
+            className="text-xs h-8 w-8"
           >
-            <RotateCcw className="mr-1 h-3 w-3" />
-            Reset
+            <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
       </CardContent>
