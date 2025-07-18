@@ -37,6 +37,8 @@ export default function TapScoreHubPage() {
   const [settings, setSettings] = useState<GameSettings>(defaultSettings);
   const [redScore, setRedScore] = useState(0);
   const [blueScore, setBlueScore] = useState(0);
+  const [redWins, setRedWins] = useState(0);
+  const [blueWins, setBlueWins] = useState(0);
   const [redPenalties, setRedPenalties] = useState(0);
   const [bluePenalties, setBluePenalties] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(settings.roundTime);
@@ -122,6 +124,8 @@ export default function TapScoreHubPage() {
   }, [matchState]);
 
   const resetRound = useCallback(() => {
+    setRedScore(0);
+    setBlueScore(0);
     setTimeRemaining(settings.roundTime);
     setRestTimeRemaining(settings.restTime);
     setIsTimerRunning(false);
@@ -129,8 +133,8 @@ export default function TapScoreHubPage() {
 
   const resetMatch = useCallback(() => {
     resetRound();
-    setRedScore(0);
-    setBlueScore(0);
+    setRedWins(0);
+    setBlueWins(0);
     setRedPenalties(0);
     setBluePenalties(0);
     setCurrentRound(1);
@@ -209,6 +213,12 @@ export default function TapScoreHubPage() {
   }, [redScore, blueScore, isTimerRunning, matchState, settings.leadPoints, handleEndMatch]);
   
   const startNextRound = useCallback(() => {
+    if (redScore > blueScore) {
+      setRedWins(w => w + 1);
+    } else if (blueScore > redScore) {
+      setBlueWins(w => w + 1);
+    }
+
     if (currentRound < settings.totalRounds) {
         setCurrentRound(r => r + 1);
         resetRound();
@@ -216,7 +226,7 @@ export default function TapScoreHubPage() {
     } else {
         handleEndMatch('Nobody');
     }
-  }, [currentRound, settings.totalRounds, resetRound, handleEndMatch]);
+  }, [currentRound, settings.totalRounds, resetRound, handleEndMatch, redScore, blueScore]);
   
   // Handles the rest period timer
   useEffect(() => {
@@ -273,8 +283,8 @@ export default function TapScoreHubPage() {
   }, [isTimerRunning, playSound, startNextRound, matchState]);
 
   const isFinished = matchState === 'finished';
-  const redWinner = isFinished && redScore > blueScore;
-  const blueWinner = isFinished && blueScore > redScore;
+  const redWinner = isFinished && (redWins > blueWins || (redWins === blueWins && redScore > blueScore));
+  const blueWinner = isFinished && (blueWins > redWins || (blueWins === redWins && blueScore > redScore));
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -294,8 +304,8 @@ export default function TapScoreHubPage() {
                 </Button>
             </div>
           
-          <ScorePanel team="red" score={redScore} penalties={redPenalties} isWinner={redWinner} />
-          <ScorePanel team="blue" score={blueScore} penalties={bluePenalties} isWinner={blueWinner} />
+          <ScorePanel team="red" score={redScore} wins={redWins} penalties={redPenalties} isWinner={redWinner} />
+          <ScorePanel team="blue" score={blueScore} wins={blueWins} penalties={bluePenalties} isWinner={blueWinner} />
 
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
             <Card className="w-48 p-2 flex flex-col gap-2 bg-card/80 backdrop-blur-sm pointer-events-auto">
@@ -311,8 +321,8 @@ export default function TapScoreHubPage() {
               </CardContent>
             </Card>
             {matchState === 'between_rounds' && (
-              <Card className="mt-2 w-auto px-4 py-1 bg-background/90 backdrop-blur-sm pointer-events-auto">
-                <p className="text-sm font-medium text-foreground">
+              <Card className="mt-2 w-auto px-4 py-1 bg-white backdrop-blur-sm pointer-events-auto">
+                <p className="text-sm font-medium text-black">
                   Rest: {formatTime(restTimeRemaining)}
                 </p>
               </Card>

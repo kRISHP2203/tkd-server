@@ -8,11 +8,12 @@ import { cn } from '@/lib/utils';
 interface ScorePanelProps {
   team: 'red' | 'blue';
   score: number;
+  wins: number;
   penalties: number;
   isWinner?: boolean;
 }
 
-export default function ScorePanel({ team, score, penalties, isWinner = false }: ScorePanelProps) {
+export default function ScorePanel({ team, score, wins, penalties, isWinner = false }: ScorePanelProps) {
   const [prevScore, setPrevScore] = useState(score);
   const [shouldAnimate, setShouldAnimate] = useState(false);
 
@@ -57,6 +58,12 @@ export default function ScorePanel({ team, score, penalties, isWinner = false }:
         <CardDescription className={cn(textClasses, 'text-lg font-medium')}>
           Gam-jeom: {penalties}
         </CardDescription>
+        <div className="flex items-center gap-2 mt-2">
+            <span className={cn(textClasses, 'text-sm font-medium')}>Wins:</span>
+            <div className="bg-white rounded-md px-3 py-1 flex items-center justify-center min-w-[32px]">
+                <span className="text-yellow-500 font-bold text-lg">{wins}</span>
+            </div>
+        </div>
       </CardHeader>
       <CardContent className="flex-grow flex items-center justify-center">
         <div className={scoreClasses}>
