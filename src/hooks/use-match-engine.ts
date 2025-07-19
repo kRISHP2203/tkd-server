@@ -9,7 +9,6 @@ type Action = {
   type: 'score' | 'penalty';
   team: 'red' | 'blue';
   points: number;
-  scoreType?: 'body' | 'head';
 };
 
 type MatchState = 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
@@ -31,10 +30,6 @@ export function useMatchEngine() {
     const [blueWins, setBlueWins] = useState(0);
     const [redPenalties, setRedPenalties] = useState(0);
     const [bluePenalties, setBluePenalties] = useState(0);
-    const [redBodyHits, setRedBodyHits] = useState(0);
-    const [blueBodyHits, setBlueBodyHits] = useState(0);
-    const [redHeadHits, setRedHeadHits] = useState(0);
-    const [blueHeadHits, setBlueHeadHits] = useState(0);
     const [timeRemaining, setTimeRemaining] = useState(settings.roundTime);
     const [restTimeRemaining, setRestTimeRemaining] = useState(settings.restTime);
     const [isTimerRunning, setIsTimerRunning] = useState(false);
@@ -121,10 +116,6 @@ export function useMatchEngine() {
       setBlueScore(0);
       setRedPenalties(0);
       setBluePenalties(0);
-      setRedBodyHits(0);
-      setBlueBodyHits(0);
-      setRedHeadHits(0);
-      setBlueHeadHits(0);
       setHistory([]);
       setTimeRemaining(settings.roundTime);
       setRoundWinner('none');
@@ -154,13 +145,7 @@ export function useMatchEngine() {
             description: winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
             duration: 5000,
         });
-
-        // 25-second system cool-down and automatic restart
-        setTimeout(() => {
-            resetMatch();
-        }, 25000);
-
-    }, [playSound, toast, resetMatch]);
+    }, [playSound, toast]);
   
     const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties') => {
       playSound('G5');
@@ -177,25 +162,13 @@ export function useMatchEngine() {
               winnerOfRound = 'red';
           } else if (blueScore > redScore) {
               winnerOfRound = 'blue';
-          } else { // Tie-breaker logic
+          } else { // Tie-breaker logic for equal score
               if (redPenalties < bluePenalties) {
                 winnerOfRound = 'red';
               } else if (bluePenalties < redPenalties) {
                 winnerOfRound = 'blue';
-              } else { // Penalties are equal, check body hits
-                  if (redBodyHits > blueBodyHits) {
-                    winnerOfRound = 'red';
-                  } else if (blueBodyHits > redBodyHits) {
-                    winnerOfRound = 'blue';
-                  } else { // Body hits are equal, check head hits
-                      if (redHeadHits > blueHeadHits) {
-                        winnerOfRound = 'red';
-                      } else if (blueHeadHits > redHeadHits) {
-                        winnerOfRound = 'blue';
-                      } else {
-                        winnerOfRound = 'tie'; // If all else fails, it's a tie
-                      }
-                  }
+              } else {
+                winnerOfRound = 'tie';
               }
           }
       }
@@ -218,41 +191,50 @@ export function useMatchEngine() {
       const roundsNeededToWin = Math.ceil(settings.totalRounds / 2);
       if (newRedWins >= roundsNeededToWin || newBlueWins >= roundsNeededToWin) {
           handleEndMatch(newRedWins > newBlueWins ? 'red' : 'blue');
+          return;
+      }
+      
+      // If no match winner yet, proceed to next round or end if all rounds are played
+      if (currentRound >= settings.totalRounds) {
+        let finalWinner: Winner = 'tie';
+        if (newRedWins > newBlueWins) finalWinner = 'red';
+        else if (newBlueWins > newRedWins) finalWinner = 'blue';
+        handleEndMatch(finalWinner);
+      } else {
+         // This logic is now handled in the useEffect for 'between_rounds' state
       }
 
     }, [
-        redScore, blueScore, redPenalties, bluePenalties, redBodyHits, blueBodyHits, redHeadHits, blueHeadHits,
-        settings.maxGamJeom, settings.totalRounds, redWins, blueWins, playSound, handleEndMatch
+        redScore, blueScore, redPenalties, bluePenalties,
+        settings.maxGamJeom, settings.totalRounds, redWins, blueWins, playSound, handleEndMatch, currentRound
     ]);
     
-    const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty', scoreType?: 'body' | 'head') => {
+    const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
       if (matchState === 'finished' || matchState === 'between_rounds') return;
   
-      const action: Action = { team, points, type, scoreType };
+      const action: Action = { team, points, type };
       
       if (type === 'score') {
         if (team === 'red') {
-          setRedScore(s => s + points);
-          if (scoreType === 'body') setRedBodyHits(h => h + 1);
-          if (scoreType === 'head') setRedHeadHits(h => h + 1);
+          setRedScore(s => Math.max(0, s + points));
         } else {
-          setBlueScore(s => s + points);
-          if (scoreType === 'body') setBlueBodyHits(h => h + 1);
-          if (scoreType === 'head') setBlueHeadHits(h => h + 1);
+          setBlueScore(s => Math.max(0, s + points));
         }
       } else if (type === 'penalty') {
         if (team === 'red') {
-          const newPenalties = redPenalties + 1;
+          const newPenalties = redPenalties + points;
+          if (newPenalties < 0) return;
           setRedPenalties(newPenalties);
-          setBlueScore(s => s + 1);
+          setBlueScore(s => Math.max(0, s + points));
           if (newPenalties >= settings.maxGamJeom) {
             handleEndRound('penalties');
             return;
           }
         } else {
-          const newPenalties = bluePenalties + 1;
+          const newPenalties = bluePenalties + points;
+          if (newPenalties < 0) return;
           setBluePenalties(newPenalties);
-          setRedScore(s => s + 1);
+          setRedScore(s => Math.max(0, s + points));
           if (newPenalties >= settings.maxGamJeom) {
             handleEndRound('penalties');
             return;
@@ -274,53 +256,42 @@ export function useMatchEngine() {
     }, [redScore, blueScore, isTimerRunning, matchState, settings.leadPoints, handleEndRound]);
     
     const startNextRound = useCallback(() => {
-      if (currentRound >= settings.totalRounds) {
-          let winner: Winner = 'tie';
-          if (redWins > blueWins) winner = 'red';
-          else if (blueWins > redWins) winner = 'blue';
-          handleEndMatch(winner);
-      } else {
-        setCurrentRound(r => r + 1);
-        resetRoundState();
-        setRestTimeRemaining(settings.restTime);
-        setMatchState('paused'); 
-        toast({
-          title: `Round ${currentRound + 1} will begin shortly.`,
-          description: `Get ready!`,
-        });
-      }
-    }, [currentRound, settings.totalRounds, resetRoundState, handleEndMatch, settings.restTime, redWins, blueWins, toast]);
+      setCurrentRound(r => r + 1);
+      resetRoundState();
+      setRestTimeRemaining(settings.restTime);
+      setMatchState('paused'); 
+      toast({
+        title: `Round ${currentRound + 1} will begin shortly.`,
+        description: `Get ready!`,
+      });
+    }, [currentRound, settings.restTime, resetRoundState, toast]);
     
     useEffect(() => {
-      if (matchState === 'between_rounds') {
-        const roundsNeededToWin = Math.ceil(settings.totalRounds / 2);
-        if (redWins < roundsNeededToWin && blueWins < roundsNeededToWin) {
+        if (matchState === 'between_rounds' && matchWinner === 'none') {
             const timer = setTimeout(() => {
-                startNextRound();
-            }, 2000); 
+                if (currentRound < settings.totalRounds) {
+                    startNextRound();
+                }
+            }, settings.restTime * 1000);
+
             return () => clearTimeout(timer);
         }
-      }
-    }, [matchState, startNextRound, redWins, blueWins, settings.totalRounds]);
+    }, [matchState, matchWinner, currentRound, settings.totalRounds, settings.restTime, startNextRound]);
   
     useEffect(() => {
-      if (matchState !== 'paused' || restTimeRemaining <= 0 || currentRound <= 1) return;
-
-      const timerInterval = setInterval(() => {
-          setRestTimeRemaining(prevTime => {
-          if (prevTime > 1) {
-              return prevTime - 1;
-          }
-          clearInterval(timerInterval);
-          setMatchState('running');
-          setIsTimerRunning(true);
-          return 0;
-          });
-      }, 1000);
-
-      return () => clearInterval(timerInterval);
-      
-    }, [matchState, restTimeRemaining, currentRound]);
+      if (matchState === 'between_rounds' && restTimeRemaining > 0) {
+        const timerInterval = setInterval(() => {
+            setRestTimeRemaining(prevTime => {
+            if (prevTime > 1) {
+                return prevTime - 1;
+            }
+            clearInterval(timerInterval);
+            return 0;
+            });
+        }, 1000);
+        return () => clearInterval(timerInterval);
+      }
+    }, [matchState, restTimeRemaining]);
   
     useEffect(() => {
       if (!isTimerRunning || matchState !== 'running') {
