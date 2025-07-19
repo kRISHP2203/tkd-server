@@ -174,8 +174,12 @@ export function useMatchEngine() {
         }
       }
     
-      setRedWins(w => w + (roundWinner === 'red' || roundWinner === 'tie' ? 1 : 0));
-      setBlueWins(w => w + (roundWinner === 'blue' || roundWinner === 'tie' ? 1 : 0));
+      if(roundWinner === 'red') setRedWins(w => w + 1);
+      if(roundWinner === 'blue') setBlueWins(w => w + 1);
+      if(roundWinner === 'tie') {
+          setRedWins(w => w + 1);
+          setBlueWins(w => w + 1);
+      }
   
     }, [playSound, matchState, redScore, blueScore]);
     
@@ -191,7 +195,9 @@ export function useMatchEngine() {
           setBlueScore(s => Math.max(0, s + points));
         }
       } else if (type === 'penalty') {
-        // Penalties add points to the other team
+        // A penalty was given to the `team`.
+        // The penalty count for `team` increases.
+        // The score for the *opposite* team increases.
         if (team === 'red') { // Penalty against Red team
             setRedPenalties(p => {
                 const newPenalties = Math.max(0, p + points);
@@ -200,7 +206,8 @@ export function useMatchEngine() {
                 }
                 return newPenalties;
             });
-            setBlueScore(s => Math.max(0, s + points));
+            // Blue team gets the point
+            if (points > 0) setBlueScore(s => s + points);
         } else { // Penalty against Blue team
             setBluePenalties(p => {
                 const newPenalties = Math.max(0, p + points);
@@ -209,7 +216,8 @@ export function useMatchEngine() {
                 }
                 return newPenalties;
             });
-            setRedScore(s => Math.max(0, s + points));
+            // Red team gets the point
+            if (points > 0) setRedScore(s => s + points);
         }
       }
   
@@ -297,10 +305,10 @@ export function useMatchEngine() {
       const timerInterval = setInterval(() => {
         setTimeRemaining(prevTime => {
           if (prevTime > 1) {
-            return prevTime - 1;
+            handleEndRound('time');
+            return 0;
           }
-          handleEndRound('time');
-          return 0;
+          return prevTime - 1;
         });
       }, 1000);
   
