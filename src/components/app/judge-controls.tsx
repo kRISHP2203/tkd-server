@@ -1,9 +1,10 @@
+
 'use client';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Settings } from 'lucide-react';
+import React from 'react';
 
 interface JudgeControlsProps {
   onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
@@ -33,7 +34,7 @@ const ActionButton = ({ team, points, onAction, children, type = 'score' }: { te
     </Button>
   );
 
-export default function JudgeControls({ onAction, onResetMatch, onOpenOptions }: JudgeControlsProps) {
+const JudgeControls = ({ onAction, onResetMatch, onOpenOptions }: JudgeControlsProps) => {
   return (
     <Card className="bg-transparent border-0 shadow-none max-w-5xl mx-auto">
       <CardContent className="p-2 flex items-center justify-between gap-4 rounded-lg border bg-card/80">
@@ -85,3 +86,5 @@ export default function JudgeControls({ onAction, onResetMatch, onOpenOptions }:
     </Card>
   );
 }
+
+export default React.memo(JudgeControls);

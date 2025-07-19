@@ -4,6 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription } from '@/components/ui/card';
 import { Pause, Play } from 'lucide-react';
+import React from 'react';
 
 interface TimerControlProps {
   timeRemaining: number;
@@ -14,19 +15,20 @@ interface TimerControlProps {
   matchState: 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
 }
 
-export default function TimerControl({
+const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+};
+
+const TimerControl = ({
   timeRemaining,
   isTimerRunning,
   currentRound,
   totalRounds,
   onToggleTimer,
   matchState,
-}: TimerControlProps) {
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
+}: TimerControlProps) => {
 
   return (
     <Card className="bg-transparent border-0 shadow-none text-center">
@@ -51,3 +53,5 @@ export default function TimerControl({
     </Card>
   );
 }
+
+export default React.memo(TimerControl);
