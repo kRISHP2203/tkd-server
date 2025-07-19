@@ -184,7 +184,7 @@ export function useMatchEngine() {
     }, [matchState, playSound, redScore, blueScore]);
     
     const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-      if (matchState === 'finished' || matchState === 'between_rounds') return;
+      if (matchState === 'finished' || matchState === 'between_rounds' || matchState === 'running' && isTimerRunning === false) return;
   
       const action: Action = { team, points, type };
       
@@ -195,36 +195,29 @@ export function useMatchEngine() {
           setBlueScore(s => Math.max(0, s + points));
         }
       } else if (type === 'penalty') {
-        // A penalty is given to the `team`.
-        // The penalty count for `team` increases.
-        // The score for the *opposite* team increases.
         if (team === 'red') { // Penalty given TO Red
-            setRedPenalties(p => {
-                const newPenalties = Math.max(0, p + points);
-                if (newPenalties >= settings.maxGamJeom) {
-                  handleEndRound('penalties', 'blue'); // Blue wins the round
-                }
-                return newPenalties;
-            });
-            // Blue team gets the point
+            const newPenalties = Math.max(0, redPenalties + points);
+            setRedPenalties(newPenalties);
             if (points > 0) setBlueScore(s => s + points);
+
+            if (newPenalties >= settings.maxGamJeom) {
+              handleEndRound('penalties', 'blue'); // Blue wins the round
+            }
         } else { // Penalty given TO Blue
-            setBluePenalties(p => {
-                const newPenalties = Math.max(0, p + points);
-                if (newPenalties >= settings.maxGamJeom) {
-                  handleEndRound('penalties', 'red'); // Red wins the round
-                }
-                return newPenalties;
-            });
-            // Red team gets the point
+            const newPenalties = Math.max(0, bluePenalties + points);
+            setBluePenalties(newPenalties);
             if (points > 0) setRedScore(s => s + points);
+
+            if (newPenalties >= settings.maxGamJeom) {
+              handleEndRound('penalties', 'red'); // Red wins the round
+            }
         }
       }
   
       playSound('C4');
       setHistory(h => [...h, action]);
   
-    }, [matchState, playSound, settings.maxGamJeom, handleEndRound]);
+    }, [matchState, isTimerRunning, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties]);
   
     useEffect(() => {
       if (isTimerRunning && matchState === 'running') {
@@ -258,8 +251,8 @@ export function useMatchEngine() {
         setRestTimeRemaining(settings.restTime);
         setMatchState('paused'); // Pause before starting rest timer
         toast({
-          title: `Round ${currentRound} Complete`,
-          description: `Get ready! Round ${currentRound + 1} will begin shortly.`,
+          title: `Round ${currentRound + 1} will begin shortly.`,
+          description: `Get ready!`,
         });
       }
     }, [currentRound, settings.totalRounds, resetRoundState, handleEndMatch, settings.restTime, redWins, blueWins, toast]);
