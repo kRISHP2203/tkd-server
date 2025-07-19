@@ -56,8 +56,8 @@ const JudgeControls = ({ onAction, onResetMatch, onOpenOptions }: JudgeControlsP
             <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-1">
                 <span className='text-sm font-medium mr-1'>Gam-jeom</span>
-                <PenaltyButton team="blue" points={1} onAction={onAction}>+1</PenaltyButton>
-                <PenaltyButton team="blue" points={-1} onAction={onAction}>-1</PenaltyButton>
+                <PenaltyButton team="red" points={1} onAction={onAction}>+1</PenaltyButton>
+                <PenaltyButton team="red" points={-1} onAction={onAction}>-1</PenaltyButton>
             </div>
         </div>
 
@@ -71,8 +71,8 @@ const JudgeControls = ({ onAction, onResetMatch, onOpenOptions }: JudgeControlsP
             <Separator orientation="vertical" className="h-6" />
              <div className="flex items-center gap-1">
                 <span className='text-sm font-medium mr-1'>Gam-jeom</span>
-                <PenaltyButton team="red" points={1} onAction={onAction}>+1</PenaltyButton>
-                <PenaltyButton team="red" points={-1} onAction={onAction}>-1</PenaltyButton>
+                <PenaltyButton team="blue" points={1} onAction={onAction}>+1</PenaltyButton>
+                <PenaltyButton team="blue" points={-1} onAction={onAction}>-1</PenaltyButton>
             </div>
         </div>
         <Button
