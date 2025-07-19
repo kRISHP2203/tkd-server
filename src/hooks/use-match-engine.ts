@@ -184,7 +184,7 @@ export function useMatchEngine() {
     }, [matchState, playSound, redScore, blueScore]);
     
     const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
-      if (matchState === 'finished' || matchState === 'between_rounds' || matchState === 'running' && isTimerRunning === false) return;
+      if (matchState === 'finished' || matchState === 'between_rounds' || (matchState !== 'idle' && !isTimerRunning) ) return;
   
       const action: Action = { team, points, type };
       
@@ -194,22 +194,24 @@ export function useMatchEngine() {
         } else {
           setBlueScore(s => Math.max(0, s + points));
         }
-      } else if (type === 'penalty') {
+      } else if (type === 'penalty' && points > 0) {
         if (team === 'red') { // Penalty given TO Red
-            const newPenalties = Math.max(0, redPenalties + points);
+            const newPenalties = redPenalties + points;
             setRedPenalties(newPenalties);
-            if (points > 0) setBlueScore(s => s + points);
+            setBlueScore(s => s + points);
 
             if (newPenalties >= settings.maxGamJeom) {
               handleEndRound('penalties', 'blue'); // Blue wins the round
+              return;
             }
         } else { // Penalty given TO Blue
-            const newPenalties = Math.max(0, bluePenalties + points);
+            const newPenalties = bluePenalties + points;
             setBluePenalties(newPenalties);
-            if (points > 0) setRedScore(s => s + points);
+            setRedScore(s => s + points);
 
             if (newPenalties >= settings.maxGamJeom) {
               handleEndRound('penalties', 'red'); // Red wins the round
+              return;
             }
         }
       }
@@ -217,7 +219,7 @@ export function useMatchEngine() {
       playSound('C4');
       setHistory(h => [...h, action]);
   
-    }, [matchState, isTimerRunning, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties]);
+    }, [matchState, isTimerRunning, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties, redScore, blueScore]);
   
     useEffect(() => {
       if (isTimerRunning && matchState === 'running') {
