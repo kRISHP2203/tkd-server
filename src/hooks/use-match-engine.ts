@@ -152,8 +152,6 @@ export function useMatchEngine() {
     }, [playSound, toast, resetMatch]);
   
     const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties', winningTeam?: 'red' | 'blue') => {
-      if (matchState !== 'running') return;
-
       playSound('G5');
       setIsTimerRunning(false);
       
@@ -182,7 +180,7 @@ export function useMatchEngine() {
 
       setMatchState('between_rounds');
 
-    }, [matchState, playSound, redScore, blueScore]);
+    }, [playSound, redScore, blueScore]);
     
     const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
       if (matchState === 'finished' || matchState === 'between_rounds') return;
@@ -232,7 +230,7 @@ export function useMatchEngine() {
       playSound('C4');
       setHistory(h => [...h, action]);
   
-    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties, redScore, blueScore]);
+    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties]);
   
     useEffect(() => {
       if (isTimerRunning && matchState === 'running') {
