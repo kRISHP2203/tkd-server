@@ -145,7 +145,13 @@ export function useMatchEngine() {
             description: winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
             duration: 5000,
         });
-    }, [playSound, toast]);
+
+        // Automatically restart the match after 5 seconds
+        setTimeout(() => {
+            resetMatch();
+        }, 5000);
+
+    }, [playSound, toast, resetMatch]);
   
     const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties') => {
       playSound('G5');
@@ -162,13 +168,13 @@ export function useMatchEngine() {
               winnerOfRound = 'red';
           } else if (blueScore > redScore) {
               winnerOfRound = 'blue';
-          } else { // Tie-breaker logic for equal score
+          } else { 
               if (redPenalties < bluePenalties) {
                 winnerOfRound = 'red';
               } else if (bluePenalties < redPenalties) {
                 winnerOfRound = 'blue';
               } else {
-                winnerOfRound = 'tie';
+                winnerOfRound = 'tie'; 
               }
           }
       }
@@ -179,29 +185,26 @@ export function useMatchEngine() {
       if (winnerOfRound === 'red') {
           newRedWins++;
           setRedWins(newRedWins);
-      }
-      if (winnerOfRound === 'blue') {
+      } else if (winnerOfRound === 'blue') {
           newBlueWins++;
           setBlueWins(newBlueWins);
       }
       
       setRoundWinner(winnerOfRound);
-      setMatchState('between_rounds');
-
+      
       const roundsNeededToWin = Math.ceil(settings.totalRounds / 2);
       if (newRedWins >= roundsNeededToWin || newBlueWins >= roundsNeededToWin) {
           handleEndMatch(newRedWins > newBlueWins ? 'red' : 'blue');
           return;
       }
       
-      // If no match winner yet, proceed to next round or end if all rounds are played
       if (currentRound >= settings.totalRounds) {
         let finalWinner: Winner = 'tie';
         if (newRedWins > newBlueWins) finalWinner = 'red';
         else if (newBlueWins > newRedWins) finalWinner = 'blue';
         handleEndMatch(finalWinner);
       } else {
-         // This logic is now handled in the useEffect for 'between_rounds' state
+         setMatchState('between_rounds');
       }
 
     }, [
@@ -225,19 +228,17 @@ export function useMatchEngine() {
           const newPenalties = redPenalties + points;
           if (newPenalties < 0) return;
           setRedPenalties(newPenalties);
-          setBlueScore(s => Math.max(0, s + points));
+          setBlueScore(s => Math.max(0, s + (points > 0 ? 1 : -1) ));
           if (newPenalties >= settings.maxGamJeom) {
             handleEndRound('penalties');
-            return;
           }
         } else {
           const newPenalties = bluePenalties + points;
           if (newPenalties < 0) return;
           setBluePenalties(newPenalties);
-          setRedScore(s => Math.max(0, s + points));
+          setRedScore(s => Math.max(0, s + (points > 0 ? 1 : -1) ));
           if (newPenalties >= settings.maxGamJeom) {
             handleEndRound('penalties');
-            return;
           }
         }
       }
@@ -261,7 +262,7 @@ export function useMatchEngine() {
       setRestTimeRemaining(settings.restTime);
       setMatchState('paused'); 
       toast({
-        title: `Round ${currentRound + 1} will begin shortly.`,
+        title: `Round ${currentRound + 1} Starting...`,
         description: `Get ready!`,
       });
     }, [currentRound, settings.restTime, resetRoundState, toast]);
