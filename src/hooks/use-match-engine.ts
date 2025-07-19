@@ -140,7 +140,7 @@ export function useMatchEngine() {
         }
         toast({
             title: "Match Over!",
-            description: winner !== 'none' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
+            description: winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
             duration: 5000,
         });
 
@@ -152,35 +152,36 @@ export function useMatchEngine() {
     }, [playSound, toast, resetMatch]);
   
     const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties', winningTeam?: 'red' | 'blue') => {
-      if (matchState === 'running') {
-        playSound('G5');
-        setIsTimerRunning(false);
-        
-        let roundWinner: Winner = 'none';
-    
-        if (reason === 'penalties' && winningTeam) {
-            roundWinner = winningTeam;
-        } else if (reason === 'lead' && winningTeam) {
-            roundWinner = winningTeam;
-        } else if (reason === 'time') {
-            if (redScore > blueScore) {
-                roundWinner = 'red';
-            } else if (blueScore > redScore) {
-                roundWinner = 'blue';
-            } else {
-                roundWinner = 'tie';
-            }
-        }
-        
-        if (roundWinner === 'red') setRedWins(w => w + 1);
-        if (roundWinner === 'blue') setBlueWins(w => w + 1);
-        if (roundWinner === 'tie') {
-            setRedWins(w => w + 1);
-            setBlueWins(w => w + 1);
-        }
+      if (matchState !== 'running') return;
 
-        setMatchState('between_rounds');
+      playSound('G5');
+      setIsTimerRunning(false);
+      
+      let roundWinner: Winner = 'none';
+  
+      if (reason === 'penalties' && winningTeam) {
+          roundWinner = winningTeam;
+      } else if (reason === 'lead' && winningTeam) {
+          roundWinner = winningTeam;
+      } else if (reason === 'time') {
+          if (redScore > blueScore) {
+              roundWinner = 'red';
+          } else if (blueScore > redScore) {
+              roundWinner = 'blue';
+          } else {
+              roundWinner = 'tie';
+          }
       }
+      
+      if (roundWinner === 'red') setRedWins(w => w + 1);
+      if (roundWinner === 'blue') setBlueWins(w => w + 1);
+      if (roundWinner === 'tie') {
+          setRedWins(w => w + 1);
+          setBlueWins(w => w + 1);
+      }
+
+      setMatchState('between_rounds');
+
     }, [matchState, playSound, redScore, blueScore]);
     
     const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
@@ -196,20 +197,34 @@ export function useMatchEngine() {
         }
       } else if (type === 'penalty' && points > 0) {
         if (team === 'red') {
-          const newPenalties = redPenalties + points;
+          const newPenalties = redPenalties + 1;
           setRedPenalties(newPenalties);
-          setBlueScore(s => s + points);
+          setBlueScore(s => s + 1);
           if (newPenalties >= settings.maxGamJeom) {
             handleEndRound('penalties', 'blue');
             return;
           }
         } else {
-          const newPenalties = bluePenalties + points;
+          const newPenalties = bluePenalties + 1;
           setBluePenalties(newPenalties);
-          setRedScore(s => s + points);
+          setRedScore(s => s + 1);
           if (newPenalties >= settings.maxGamJeom) {
             handleEndRound('penalties', 'red');
             return;
+          }
+        }
+      } else if (type === 'penalty' && points < 0) { // handle decreasing penalties
+        if (team === 'red') {
+          const newPenalties = redPenalties - 1;
+          if (newPenalties >= 0) {
+            setRedPenalties(newPenalties);
+            setBlueScore(s => s - 1);
+          }
+        } else {
+          const newPenalties = bluePenalties - 1;
+          if (newPenalties >= 0) {
+            setBluePenalties(newPenalties);
+            setRedScore(s => s - 1);
           }
         }
       }
@@ -233,8 +248,10 @@ export function useMatchEngine() {
       // Check for match winner based on rounds won
       const roundsNeededToWin = Math.ceil(settings.totalRounds / 2);
       if (redWins >= roundsNeededToWin || blueWins >= roundsNeededToWin) {
-          handleEndMatch(redWins > blueWins ? 'red' : 'blue');
-          return;
+          if (redWins !== blueWins) { // If it's not a tie in total wins
+            handleEndMatch(redWins > blueWins ? 'red' : 'blue');
+            return;
+          }
       }
       
       // Check if all rounds are completed
@@ -242,7 +259,7 @@ export function useMatchEngine() {
           let winner: Winner = 'none';
           if (redWins > blueWins) winner = 'red';
           else if (blueWins > redWins) winner = 'blue';
-          else winner = 'tie'; // Could be a sudden death round in reality
+          else winner = 'tie';
           handleEndMatch(winner);
       } else {
         // Start the next round
