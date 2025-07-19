@@ -7,28 +7,28 @@ import { Separator } from '@/components/ui/separator';
 import React from 'react';
 
 interface JudgeControlsProps {
-  onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
+  onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty', scoreType?: 'body' | 'head') => void;
   onResetMatch: () => void;
   onOpenOptions: () => void;
 }
 
-const ActionButton = ({ team, points, onAction, children, type = 'score' }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode, type?: 'score' | 'penalty' }) => (
+const ActionButton = ({ team, points, onAction, children, scoreType, type = 'score' }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode, scoreType?: 'body' | 'head', type?: 'score' | 'penalty' }) => (
     <Button
       size="sm"
       variant={team === 'red' ? 'destructive' : 'default'}
       className="flex-1"
-      onClick={() => onAction(team, points, type)}
+      onClick={() => onAction(team, points, type, scoreType)}
     >
       {children}
     </Button>
   );
 
-  const PenaltyButton = ({ team, points, onAction, children }: { team: 'red' | 'blue'; points: number; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
+  const PenaltyButton = ({ team, onAction, children }: { team: 'red' | 'blue'; onAction: JudgeControlsProps['onAction']; children: React.ReactNode }) => (
     <Button
       size="sm"
       variant="outline"
       className="flex-1"
-      onClick={() => onAction(team, points, 'penalty')}
+      onClick={() => onAction(team, 1, 'penalty')}
     >
       {children}
     </Button>
@@ -50,14 +50,13 @@ const JudgeControls = ({ onAction, onResetMatch, onOpenOptions }: JudgeControlsP
         <div className="flex items-center gap-3">
             <span className="font-bold font-headline text-destructive text-sm">RED</span>
             <div className="flex items-center gap-1">
-                <ActionButton team="red" points={1} onAction={onAction}>+1</ActionButton>
-                <ActionButton team="red" points={-1} onAction={onAction}>-1</ActionButton>
+                <ActionButton team="red" points={2} onAction={onAction} scoreType="body">Body</ActionButton>
+                <ActionButton team="red" points={3} onAction={onAction} scoreType="head">Head</ActionButton>
             </div>
             <Separator orientation="vertical" className="h-6" />
             <div className="flex items-center gap-1">
                 <span className='text-sm font-medium mr-1'>Gam-jeom</span>
-                <PenaltyButton team="red" points={1} onAction={onAction}>+1</PenaltyButton>
-                <PenaltyButton team="red" points={-1} onAction={onAction}>-1</PenaltyButton>
+                <PenaltyButton team="red" onAction={onAction}>+1</PenaltyButton>
             </div>
         </div>
 
@@ -65,14 +64,13 @@ const JudgeControls = ({ onAction, onResetMatch, onOpenOptions }: JudgeControlsP
         <div className="flex items-center gap-3">
             <span className="font-bold font-headline text-primary text-sm">BLUE</span>
             <div className="flex items-center gap-1">
-                <ActionButton team="blue" points={1} onAction={onAction}>+1</ActionButton>
-                <ActionButton team="blue" points={-1} onAction={onAction}>-1</ActionButton>
+                <ActionButton team="blue" points={2} onAction={onAction} scoreType="body">Body</ActionButton>
+                <ActionButton team="blue" points={3} onAction={onAction} scoreType="head">Head</ActionButton>
             </div>
             <Separator orientation="vertical" className="h-6" />
              <div className="flex items-center gap-1">
                 <span className='text-sm font-medium mr-1'>Gam-jeom</span>
-                <PenaltyButton team="blue" points={1} onAction={onAction}>+1</PenaltyButton>
-                <PenaltyButton team="blue" points={-1} onAction={onAction}>-1</PenaltyButton>
+                <PenaltyButton team="blue" onAction={onAction}>+1</PenaltyButton>
             </div>
         </div>
         <Button
