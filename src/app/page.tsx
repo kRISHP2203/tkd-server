@@ -26,6 +26,7 @@ export default function TapScoreHubPage() {
     currentRound,
     settings,
     isOptionsDialogOpen,
+    matchWinner,
     handleJudgeAction,
     resetMatch,
     handleTimerToggle,
@@ -34,8 +35,6 @@ export default function TapScoreHubPage() {
   } = useMatchEngine();
 
   const isFinished = matchState === 'finished';
-  const redWinner = isFinished && redWins > blueWins;
-  const blueWinner = isFinished && blueWins > redWins;
   
   return (
     <>
@@ -49,8 +48,8 @@ export default function TapScoreHubPage() {
             </Button>
           </div>
 
-          <ScorePanel team="red" score={redScore} wins={redWins} penalties={redPenalties} isWinner={redWinner} />
-          <ScorePanel team="blue" score={blueScore} wins={blueWins} penalties={bluePenalties} isWinner={blueWinner} />
+          <ScorePanel team="red" score={redScore} wins={redWins} penalties={redPenalties} isWinner={isFinished && matchWinner === 'red'} />
+          <ScorePanel team="blue" score={blueScore} wins={blueWins} penalties={bluePenalties} isWinner={isFinished && matchWinner === 'blue'} />
 
           <MatchControls 
             timeRemaining={timeRemaining}
@@ -63,6 +62,7 @@ export default function TapScoreHubPage() {
             onAction={handleJudgeAction}
             onResetMatch={resetMatch}
             onOpenOptions={() => setIsOptionsDialogOpen(true)}
+            matchWinner={matchWinner}
           />
 
         </main>
