@@ -27,6 +27,7 @@ export default function MatchManager() {
     settings,
     isOptionsDialogOpen,
     matchWinner,
+    roundWinner,
     handleJudgeAction,
     resetMatch,
     handleTimerToggle,
@@ -35,6 +36,7 @@ export default function MatchManager() {
   } = useMatchEngine();
 
   const isFinished = matchState === 'finished';
+  const isBetweenRounds = matchState === 'between_rounds';
   
   return (
     <>
@@ -47,8 +49,20 @@ export default function MatchManager() {
           </Button>
         </div>
 
-        <ScorePanel team="red" score={redScore} wins={redWins} penalties={redPenalties} isWinner={isFinished && matchWinner === 'red'} />
-        <ScorePanel team="blue" score={blueScore} wins={blueWins} penalties={bluePenalties} isWinner={isFinished && matchWinner === 'blue'} />
+        <ScorePanel 
+          team="red" 
+          score={redScore} 
+          wins={redWins} 
+          penalties={redPenalties} 
+          isWinner={(isFinished && matchWinner === 'red') || (isBetweenRounds && roundWinner === 'red')}
+        />
+        <ScorePanel 
+          team="blue" 
+          score={blueScore} 
+          wins={blueWins} 
+          penalties={bluePenalties} 
+          isWinner={(isFinished && matchWinner === 'blue') || (isBetweenRounds && roundWinner === 'blue')}
+        />
 
         <MatchControls 
           timeRemaining={timeRemaining}

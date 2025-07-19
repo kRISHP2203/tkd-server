@@ -38,6 +38,7 @@ export function useMatchEngine() {
     const [matchState, setMatchState] = useState<MatchState>('idle');
     const [isOptionsDialogOpen, setIsOptionsDialogOpen] = useState(false);
     const [matchWinner, setMatchWinner] = useState<Winner>('none');
+    const [roundWinner, setRoundWinner] = useState<Winner>('none');
     
     const synth = useRef<any>(null);
     const isPlaying = useRef(false);
@@ -117,6 +118,7 @@ export function useMatchEngine() {
       setBluePenalties(0);
       setHistory([]);
       setTimeRemaining(settings.roundTime);
+      setRoundWinner('none');
     }, [settings.roundTime]);
   
     const resetMatch = useCallback(() => {
@@ -155,25 +157,27 @@ export function useMatchEngine() {
       playSound('G5');
       setIsTimerRunning(false);
       
-      let roundWinner: Winner = 'none';
+      let winnerOfRound: Winner = 'none';
   
       if (reason === 'penalties' && winningTeam) {
-          roundWinner = winningTeam;
+          winnerOfRound = winningTeam;
       } else if (reason === 'lead' && winningTeam) {
-          roundWinner = winningTeam;
+          winnerOfRound = winningTeam;
       } else if (reason === 'time') {
           if (redScore > blueScore) {
-              roundWinner = 'red';
+              winnerOfRound = 'red';
           } else if (blueScore > redScore) {
-              roundWinner = 'blue';
+              winnerOfRound = 'blue';
           } else {
-              roundWinner = 'tie';
+              winnerOfRound = 'tie';
           }
       }
       
-      if (roundWinner === 'red') setRedWins(w => w + 1);
-      if (roundWinner === 'blue') setBlueWins(w => w + 1);
-      if (roundWinner === 'tie') {
+      setRoundWinner(winnerOfRound);
+
+      if (winnerOfRound === 'red') setRedWins(w => w + 1);
+      if (winnerOfRound === 'blue') setBlueWins(w => w + 1);
+      if (winnerOfRound === 'tie') {
           setRedWins(w => w + 1);
           setBlueWins(w => w + 1);
       }
@@ -194,7 +198,7 @@ export function useMatchEngine() {
           setBlueScore(s => Math.max(0, s + points));
         }
       } else if (type === 'penalty') {
-        if (points > 0) { // Increasing a penalty
+        if (points > 0) {
           if (team === 'red') {
             const newPenalties = redPenalties + 1;
             setRedPenalties(newPenalties);
@@ -203,7 +207,7 @@ export function useMatchEngine() {
               handleEndRound('penalties', 'blue');
               return;
             }
-          } else { // team is blue
+          } else {
             const newPenalties = bluePenalties + 1;
             setBluePenalties(newPenalties);
             setRedScore(s => s + 1);
@@ -212,13 +216,13 @@ export function useMatchEngine() {
               return;
             }
           }
-        } else if (points < 0) { // Decreasing a penalty
+        } else if (points < 0) {
           if (team === 'red') {
             if (redPenalties > 0) {
               setRedPenalties(p => p - 1);
               setBlueScore(s => Math.max(0, s - 1));
             }
-          } else { // team is blue
+          } else {
             if (bluePenalties > 0) {
               setBluePenalties(p => p - 1);
               setRedScore(s => Math.max(0, s - 1));
@@ -335,6 +339,7 @@ export function useMatchEngine() {
         isOptionsDialogOpen,
         setIsOptionsDialogOpen,
         matchWinner,
+        roundWinner,
         handleSettingsSave,
         handleTimerToggle,
         resetMatch,
