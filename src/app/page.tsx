@@ -157,11 +157,29 @@ export default function TapScoreHubPage() {
     });
   }, [playSound, toast]);
 
-  const handleEndRound = useCallback(() => {
+  const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties', leadingTeam?: 'red' | 'blue') => {
+    if (matchState === 'round_over' || matchState === 'finished') return;
+  
     playSound('G5');
     setIsTimerRunning(false);
+  
+    if (reason === 'penalties' && leadingTeam) {
+      if (leadingTeam === 'red') setRedWins(w => w + 1);
+      else setBlueWins(w => w + 1);
+    } else if (reason === 'lead' && leadingTeam) {
+      if (leadingTeam === 'red') setRedWins(w => w + 1);
+      else setBlueWins(w => w + 1);
+    } else if (reason === 'time') {
+      if (redScore > blueScore) {
+        setRedWins(w => w + 1);
+      } else if (blueScore > redScore) {
+        setBlueWins(w => w + 1);
+      }
+      // If scores are equal, no one gets a win for the round.
+    }
+  
     setMatchState('round_over');
-  }, [playSound]);
+  }, [playSound, matchState, redScore, blueScore]);
   
   const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
     if (matchState !== 'running' && matchState !== 'paused' && matchState !== 'idle') return;
@@ -180,8 +198,7 @@ export default function TapScoreHubPage() {
         setBluePenalties(p => {
             const newPenalties = Math.max(0, p + points);
             if(newPenalties >= settings.maxGamJeom) {
-              setRedWins(w => w + 1);
-              handleEndRound();
+              handleEndRound('penalties', 'red');
             }
             return newPenalties;
         });
@@ -190,8 +207,7 @@ export default function TapScoreHubPage() {
         setRedPenalties(p => {
             const newPenalties = Math.max(0, p + points);
             if (newPenalties >= settings.maxGamJeom) {
-              setBlueWins(w => w + 1);
-              handleEndRound();
+              handleEndRound('penalties', 'blue');
             }
             return newPenalties;
         });
@@ -207,32 +223,24 @@ export default function TapScoreHubPage() {
   useEffect(() => {
     if (isTimerRunning && matchState === 'running') {
       if (redScore - blueScore >= settings.leadPoints) {
-        setRedWins(w => w + 1);
-        handleEndRound();
+        handleEndRound('lead', 'red');
       } else if (blueScore - redScore >= settings.leadPoints) {
-        setBlueWins(w => w + 1);
-        handleEndRound();
+        handleEndRound('lead', 'blue');
       }
     }
   }, [redScore, blueScore, isTimerRunning, matchState, settings.leadPoints, handleEndRound]);
   
   const startNextRound = useCallback(() => {
-    if (currentRound >= settings.totalRounds) {
-      const finalRedWins = redWins + (redScore > blueScore ? 1 : 0);
-      const finalBlueWins = blueWins + (blueScore > redScore ? 1 : 0);
-      
+    if (currentRound >= settings.totalRounds || redWins > settings.totalRounds / 2 || blueWins > settings.totalRounds / 2) {
       let winner = 'Nobody';
-      if (finalRedWins > finalBlueWins) winner = 'Hong (Red)';
-      else if (finalBlueWins > finalRedWins) winner = 'Chong (Blue)';
-
+      if (redWins > blueWins) winner = 'Hong (Red)';
+      else if (blueWins > redWins) winner = 'Chong (Blue)';
+      else { // Tie-breaker if win counts are equal
+        if (redScore > blueScore) winner = 'Hong (Red)';
+        else if (blueScore > redScore) winner = 'Chong (Blue)';
+      }
       handleEndMatch(winner);
     } else {
-      if (redScore > blueScore) {
-        setRedWins(w => w + 1);
-      } else if (blueScore > redScore) {
-        setBlueWins(w => w + 1);
-      }
-  
       setCurrentRound(r => r + 1);
       resetRoundState();
       setRestTimeRemaining(settings.restTime);
@@ -292,7 +300,7 @@ export default function TapScoreHubPage() {
         }
         
         // End of round
-        handleEndRound();
+        handleEndRound('time');
         return 0;
       });
     }, 1000);
