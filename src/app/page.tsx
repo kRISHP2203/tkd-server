@@ -163,21 +163,31 @@ export default function TapScoreHubPage() {
     playSound('G5');
     setIsTimerRunning(false);
   
+    let roundWinner: 'red' | 'blue' | 'tie' | 'none' = 'none';
+
     if (reason === 'penalties' && leadingTeam) {
-      if (leadingTeam === 'red') setRedWins(w => w + 1);
-      else setBlueWins(w => w + 1);
+      roundWinner = leadingTeam;
     } else if (reason === 'lead' && leadingTeam) {
-      if (leadingTeam === 'red') setRedWins(w => w + 1);
-      else setBlueWins(w => w + 1);
+      roundWinner = leadingTeam;
     } else if (reason === 'time') {
       if (redScore > blueScore) {
-        setRedWins(w => w + 1);
+        roundWinner = 'red';
       } else if (blueScore > redScore) {
-        setBlueWins(w => w + 1);
+        roundWinner = 'blue';
+      } else {
+        roundWinner = 'tie';
       }
-      // If scores are equal, no one gets a win for the round.
     }
   
+    if (roundWinner === 'red') {
+      setRedWins(w => w + 1);
+    } else if (roundWinner === 'blue') {
+      setBlueWins(w => w + 1);
+    } else if (roundWinner === 'tie') {
+      setRedWins(w => w + 1);
+      setBlueWins(w => w + 1);
+    }
+
     setMatchState('round_over');
   }, [playSound, matchState, redScore, blueScore]);
   
