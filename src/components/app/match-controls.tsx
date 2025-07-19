@@ -14,7 +14,7 @@ interface MatchControlsProps {
     onToggleTimer: () => void;
     matchState: 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
     restTimeRemaining: number;
-    onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty', scoreType?: 'body' | 'head') => void;
+    onAction: (team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => void;
     onResetMatch: () => void;
     onOpenOptions: () => void;
     matchWinner: 'red' | 'blue' | 'tie' | 'none';
@@ -74,7 +74,7 @@ export default function MatchControls({
                 </Card>
                 )}
             </div>
-            {(matchState === 'paused' || matchState === 'idle' || matchState === 'running') && (
+            {(matchState === 'paused' || matchState === 'idle') && (
                 <footer className="fixed bottom-0 left-0 right-0 p-4 bg-transparent backdrop-blur-sm">
                     <JudgeControls onAction={onAction} onResetMatch={onResetMatch} onOpenOptions={onOpenOptions} />
                 </footer>
