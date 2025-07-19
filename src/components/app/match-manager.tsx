@@ -41,13 +41,15 @@ export default function MatchManager() {
   return (
     <>
       <main className="flex-grow flex flex-col md:flex-row relative">
-        <div className="absolute top-4 right-4 z-10">
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/settings">
-              <Settings className="h-6 w-6 text-foreground/80" />
-            </Link>
-          </Button>
-        </div>
+        {matchState !== 'running' && (
+          <div className="absolute top-4 right-4 z-10">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/settings">
+                <Settings className="h-6 w-6 text-foreground/80" />
+              </Link>
+            </Button>
+          </div>
+        )}
 
         <ScorePanel 
           team="red" 
