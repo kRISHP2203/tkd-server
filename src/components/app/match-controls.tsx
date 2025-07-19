@@ -46,9 +46,11 @@ export default function MatchControls({
         <>
             <div className="absolute inset-0 flex flex-col items-center justify-center p-4 pointer-events-none">
                 {matchState === 'finished' ? (
-                    <div className={cn("text-7xl font-headline font-bold", winnerColorClass)}>
-                        Winner!
-                    </div>
+                    <Card className="bg-black/80 backdrop-blur-sm pointer-events-auto p-4 md:p-8">
+                        <div className={cn("text-8xl md:text-9xl font-headline font-bold", winnerColorClass)}>
+                            Winner!
+                        </div>
+                    </Card>
                 ) : (
                     <Card className="w-48 p-2 flex flex-col gap-2 bg-card/80 backdrop-blur-sm pointer-events-auto">
                     <CardContent className="p-0 flex-grow flex flex-col justify-center gap-2">
