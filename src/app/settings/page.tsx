@@ -8,10 +8,10 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Server, Wifi, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import ConnectionSettings from '@/components/app/settings/connection-settings';
-import RefereeManagement, { Referee } from '@/components/app/settings/referee-management';
 import PremiumSettings from '@/components/app/settings/premium-settings';
 import { useAuth } from '@/hooks/use-auth';
+import type { Referee } from '@/components/app/settings/referee-management';
+import RefereeConnectionHub from '@/components/app/settings/referee-connection-hub';
 
 export type ConnectionMode = 'websocket' | 'udp';
 
@@ -39,7 +39,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [referees, setReferees] = useState<Referee[]>([]);
   const { toast } = useToast();
-  const { licenseKey, plan, deviceId } = useAuth();
+  const { licenseKey, plan, deviceId, maxReferees } = useAuth();
 
   useEffect(() => {
     try {
@@ -121,10 +121,10 @@ export default function SettingsPage() {
 
   const handleCopyIp = () => {
     if (settings.serverIp) {
-      navigator.clipboard.writeText(settings.serverIp);
+      navigator.clipboard.writeText(`${settings.serverIp}:${settings.serverPort}`);
       toast({
-        title: 'IP Address Copied',
-        description: `${settings.serverIp} has been copied to your clipboard.`,
+        title: 'IP Address & Port Copied',
+        description: `${settings.serverIp}:${settings.serverPort} has been copied to your clipboard.`,
       });
     } else {
       toast({
@@ -166,14 +166,15 @@ export default function SettingsPage() {
           
           <PremiumSettings />
 
-          <ConnectionSettings 
+          <RefereeConnectionHub
             settings={settings}
             setSettings={setSettings}
             onCopyIp={handleCopyIp}
+            referees={referees}
+            onResetConnections={handleResetConnections}
+            maxReferees={maxReferees}
           />
           
-          <RefereeManagement referees={referees} onResetConnections={handleResetConnections} />
-
           <Alert>
             <Server className="h-4 w-4" />
             <AlertTitle>Server Port Information</AlertTitle>
