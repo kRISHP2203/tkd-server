@@ -85,7 +85,7 @@ export function useMatchEngine() {
       };
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        //console.error('WebSocket error:', error);
       };
 
       // Clean up the connection when the component unmounts
