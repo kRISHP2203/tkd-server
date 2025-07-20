@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { GameSettings } from '@/components/app/game-options-dialog';
 import { useToast } from "@/hooks/use-toast";
+import { v4 as uuidv4 } from 'uuid';
 
 type Action = {
   type: 'score' | 'penalty';
@@ -13,6 +14,13 @@ type Action = {
 
 type MatchState = 'idle' | 'running' | 'paused' | 'between_rounds' | 'finished';
 type Winner = 'red' | 'blue' | 'tie' | 'none';
+
+export interface MatchResult {
+  id: string;
+  winner: Winner;
+  finalScore: { red: number, blue: number };
+  date: string;
+}
 
 const defaultSettings: GameSettings = {
   roundTime: 120, // 2 minutes
@@ -205,11 +213,34 @@ export function useMatchEngine() {
       toast({ title: "Match Reset", description: "The match has been reset to its initial state." });
     }, [resetRoundState, settings.restTime, toast]);
     
+    const logMatchResult = useCallback((winner: Winner, finalRedScore: number, finalBlueScore: number) => {
+        const newResult: MatchResult = {
+            id: uuidv4(),
+            winner: winner,
+            finalScore: { red: finalRedScore, blue: finalBlueScore },
+            date: new Date().toISOString()
+        };
+        
+        try {
+            const historyString = localStorage.getItem('matchHistory');
+            let history: MatchResult[] = historyString ? JSON.parse(historyString) : [];
+            history.unshift(newResult);
+            if (history.length > 5) {
+                history = history.slice(0, 5);
+            }
+            localStorage.setItem('matchHistory', JSON.stringify(history));
+        } catch(e) {
+            console.error("Failed to save match history", e);
+        }
+    }, []);
+
     const handleEndMatch = useCallback((winner: Winner) => {
         setTimeout(() => {
             setIsTimerRunning(false);
             setMatchState('finished');
             setMatchWinner(winner);
+
+            logMatchResult(winner, redScore, blueScore);
 
             if (synth.current) {
                 playSound('A5');
@@ -225,7 +256,7 @@ export function useMatchEngine() {
                 resetMatch();
             }, 5000);
         }, 0);
-    }, [playSound, toast, resetMatch]);
+    }, [playSound, toast, resetMatch, logMatchResult, redScore, blueScore]);
   
     const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties', penalizedTeam?: 'red' | 'blue') => {
       playSound('G5');
@@ -266,7 +297,7 @@ export function useMatchEngine() {
       
       setRoundWinner(winnerOfRound);
       
-      const roundsNeededToWin = 2;
+      const roundsNeededToWin = Math.ceil(settings.totalRounds / 2);
       if (newRedWins >= roundsNeededToWin || newBlueWins >= roundsNeededToWin) {
           handleEndMatch(newRedWins > newBlueWins ? 'red' : 'blue');
           return;
@@ -405,7 +436,7 @@ export function useMatchEngine() {
   
       return () => clearInterval(timerInterval);
     }, [isTimerRunning, matchState, handleEndRound]);
-
+    
     return {
         settings,
         redScore,

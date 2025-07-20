@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, History } from 'lucide-react';
 import Link from 'next/link';
 
 import { useMatchEngine } from '@/hooks/use-match-engine';
@@ -42,7 +42,12 @@ export default function MatchManager() {
     <>
       <main className="flex-grow flex flex-col md:flex-row relative">
         {matchState !== 'running' && (
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/history">
+                <History className="h-6 w-6 text-foreground/80" />
+              </Link>
+            </Button>
             <Button variant="ghost" size="icon" asChild>
               <Link href="/settings">
                 <Settings className="h-6 w-6 text-foreground/80" />

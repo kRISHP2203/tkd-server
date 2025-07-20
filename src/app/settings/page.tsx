@@ -39,6 +39,19 @@ export default function SettingsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
+    try {
+      const savedSettings = localStorage.getItem('appSettings');
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings);
+        // Ensure server port is not overwritten by local settings
+        setSettings({ ...defaultSettings, ...parsed, serverPort: 8080 });
+      }
+    } catch (e) {
+      console.error("Could not load app settings", e);
+    }
+  }, []);
+
+  useEffect(() => {
     // Function to establish WebSocket connection
     const connect = () => {
       // Avoid creating multiple connections
@@ -86,12 +99,20 @@ export default function SettingsPage() {
   }, []);
 
   const handleSave = () => {
-    // In a real app, this would trigger a server restart or re-initialization.
-    console.log('Saving settings and restarting server...', settings);
-    toast({
-      title: 'Settings Saved',
-      description: 'Your new settings have been saved. Server restart initiated.',
-    });
+    try {
+      localStorage.setItem('appSettings', JSON.stringify(settings));
+      toast({
+        title: 'Settings Saved',
+        description: 'Your new settings have been saved locally.',
+      });
+    } catch(e) {
+      console.error("Failed to save settings", e);
+      toast({
+        title: 'Error saving settings',
+        description: 'Could not save settings to local storage.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleCopyIp = () => {
@@ -149,14 +170,14 @@ export default function SettingsPage() {
 
           <Alert>
             <Server className="h-4 w-4" />
-            <AlertTitle>Apply Changes</AlertTitle>
+            <AlertTitle>Server Port Information</AlertTitle>
             <AlertDescription>
-              To apply new network settings, the server needs to be restarted.
+              The WebSocket server port is fixed at 8080 and cannot be changed here.
             </AlertDescription>
           </Alert>
 
           <Button size="lg" className="w-full" onClick={handleSave}>
-            Save & Restart Server
+            Save Settings
           </Button>
         </CardContent>
       </Card>
