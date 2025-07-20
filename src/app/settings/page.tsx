@@ -28,7 +28,7 @@ const defaultSettings: AppSettings = {
   connectionTimeout: 5000,
   autoReconnect: true,
   broadcastScore: false,
-  serverIp: '192.168.1.100', // Default placeholder
+  serverIp: '', // Default to empty to force user input
 };
 
 export default function SettingsPage() {
@@ -45,11 +45,19 @@ export default function SettingsPage() {
   };
 
   const handleCopyIp = () => {
-    navigator.clipboard.writeText(settings.serverIp);
-    toast({
-      title: 'IP Address Copied',
-      description: `${settings.serverIp} has been copied to your clipboard.`,
-    });
+    if (settings.serverIp) {
+      navigator.clipboard.writeText(settings.serverIp);
+      toast({
+        title: 'IP Address Copied',
+        description: `${settings.serverIp} has been copied to your clipboard.`,
+      });
+    } else {
+      toast({
+        title: 'No IP Address to Copy',
+        description: `Please enter this device's IP address first.`,
+        variant: 'destructive',
+      });
+    }
   };
   
   const handleResetConnections = () => {

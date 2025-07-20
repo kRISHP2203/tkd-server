@@ -38,12 +38,15 @@ const ConnectionSettingsComponent = ({ settings, setSettings, onCopyIp }: Connec
                         type="text" 
                         value={settings.serverIp}
                         onChange={(e) => setSettings(s => ({ ...s, serverIp: e.target.value }))}
-                        placeholder="e.g. 192.168.1.100" 
+                        placeholder="e.g. 192.168.1.X" 
                         />
                         <Button variant="outline" size="icon" onClick={onCopyIp}>
                         <Copy className="h-4 w-4" />
                         </Button>
                     </div>
+                     <p className="text-xs text-muted-foreground px-1">
+                        Find IP: Win (`ipconfig`) or Mac/Linux (`ifconfig`).
+                    </p>
                     </div>
                     <div className="space-y-2">
                     <Label htmlFor="server-port">Listening Port</Label>
@@ -52,12 +55,15 @@ const ConnectionSettingsComponent = ({ settings, setSettings, onCopyIp }: Connec
                         type="number" 
                         value={settings.serverPort}
                         onChange={(e) => setSettings(s => ({ ...s, serverPort: parseInt(e.target.value) || 0 }))}
-                        placeholder="e.g. 9000" 
+                        placeholder="e.g. 8080" 
                     />
+                     <p className="text-xs text-muted-foreground px-1 invisible">
+                        Placeholder to maintain alignment.
+                    </p>
                     </div>
                 </div>
 
-                <p className="text-xs text-muted-foreground px-1">
+                <p className="text-sm text-muted-foreground px-1">
                     Referees should connect to the IP address and port configured above.
                 </p>
 
