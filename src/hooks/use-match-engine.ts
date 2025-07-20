@@ -60,6 +60,40 @@ export function useMatchEngine() {
       }
     }, [matchState]);
   
+    // Connect to the WebSocket server
+    useEffect(() => {
+      const ws = new WebSocket('ws://localhost:8080');
+
+      ws.onopen = () => {
+        console.log('✅ UI connected to WebSocket server');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data.toString());
+          if (message.action && message.team && message.points) {
+            // Received a valid action from the server, update the score
+            handleJudgeAction(message.team, message.points, message.action, true);
+          }
+        } catch (e) {
+          console.error('Error parsing message from server:', e);
+        }
+      };
+
+      ws.onclose = () => {
+        console.log('🔌 UI disconnected from WebSocket server');
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      // Clean up the connection when the component unmounts
+      return () => {
+        ws.close();
+      };
+    }, []); // Empty dependency array ensures this runs only once
+
     const handleSettingsSave = (newSettings: GameSettings) => {
       setSettings(newSettings);
       if (matchState === 'idle') {
@@ -153,8 +187,7 @@ export function useMatchEngine() {
       toast({ title: "Match Reset", description: "The match has been reset to its initial state." });
     }, [resetRoundState, settings.restTime, toast]);
     
-    const handleEndMatch = useCallback((winner: Winner, penalizedTeam?: 'red' | 'blue') => {
-        // Defer state updates to prevent "cannot update during render" errors
+    const handleEndMatch = useCallback((winner: Winner) => {
         setTimeout(() => {
             setIsTimerRunning(false);
             setMatchState('finished');
@@ -170,7 +203,6 @@ export function useMatchEngine() {
                 duration: 5000,
             });
 
-            // Automatically restart the match after 5 seconds
             setTimeout(() => {
                 resetMatch();
             }, 5000);
@@ -236,8 +268,15 @@ export function useMatchEngine() {
         settings.totalRounds, redWins, blueWins, playSound, handleEndMatch, currentRound
     ]);
     
-    const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
+    const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty', fromRemote: boolean = false) => {
       if (matchState === 'finished' || matchState === 'between_rounds') return;
+      
+      // If the action is from the local UI, broadcast it.
+      // We will add the WebSocket instance to do this in a future step.
+      // For now, this structure prevents infinite loops.
+      if (!fromRemote) {
+        // TODO: Broadcast to server
+      }
   
       const action: Action = { team, points, type };
       
