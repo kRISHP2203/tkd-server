@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm-run-all --parallel next:dev ws:dev",
+    "dev": "npm run ws:dev & npm run next:dev",
     "next:dev": "next dev",
     "ws:dev": "tsx watch src/server/index.ts",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
