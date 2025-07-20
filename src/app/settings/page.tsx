@@ -17,7 +17,7 @@ export type ConnectionMode = 'websocket' | 'udp';
 
 export interface AppSettings {
   connectionMode: ConnectionMode;
-  serverPort: number;
+  readonly serverPort: 8080;
   connectionTimeout: number;
   autoReconnect: boolean;
   broadcastScore: boolean;
@@ -104,7 +104,7 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     try {
-      localStorage.setItem('appSettings', JSON.stringify(settings));
+      localStorage.setItem('appSettings', JSON.stringify({ ...settings, serverPort: 8080 }));
       toast({
         title: 'Settings Saved',
         description: 'Your new settings have been saved locally.',
