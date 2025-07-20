@@ -153,14 +153,14 @@ export function useMatchEngine() {
 
     }, [playSound, toast, resetMatch]);
   
-    const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties') => {
+    const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties', penalizedTeam?: 'red' | 'blue') => {
       playSound('G5');
       setIsTimerRunning(false);
       
       let winnerOfRound: Winner = 'none';
   
       if (reason === 'penalties') {
-          winnerOfRound = redPenalties >= settings.maxGamJeom ? 'blue' : 'red';
+          winnerOfRound = penalizedTeam === 'red' ? 'blue' : 'red';
       } else if (reason === 'lead') {
           winnerOfRound = redScore > blueScore ? 'red' : 'blue';
       } else if (reason === 'time') {
@@ -232,8 +232,8 @@ export function useMatchEngine() {
               else setBlueScore(s => Math.max(0, s - 1));
 
               if (newPenalties >= settings.maxGamJeom) {
-                  handleEndRound('penalties');
-                  return; // Stop further execution
+                  handleEndRound('penalties', 'red');
+                  return; 
               }
           } else { // blue team
               const newPenalties = bluePenalties + points;
@@ -243,8 +243,8 @@ export function useMatchEngine() {
               else setRedScore(s => Math.max(0, s - 1));
 
               if (newPenalties >= settings.maxGamJeom) {
-                  handleEndRound('penalties');
-                  return; // Stop further execution
+                  handleEndRound('penalties', 'blue');
+                  return; 
               }
           }
       }
