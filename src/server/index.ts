@@ -217,10 +217,10 @@ wss.on('connection', ws => {
         console.log(`🔌 Client disconnected: ${customWs.id}`);
         if (clientInfo) {
             broadcastToLicense(clientInfo.licenseKey, { action: 'referee_list', referees: getRefereeListForLicense(clientInfo.licenseKey) });
-            if (clientInfo.licenseKey && clientInfo.deviceId) {
-                // In a real app, you might want to delay this to handle brief disconnects
-                // removeDeviceFromLicense(clientInfo.licenseKey, clientInfo.deviceId);
-            }
+            // In a real app, you might want to delay this to handle brief disconnects
+            // if (clientInfo.licenseKey && clientInfo.deviceId) {
+            //     removeDeviceFromLicense(clientInfo.licenseKey, clientInfo.deviceId);
+            // }
         }
         clientData.delete(customWs.id);
     });
@@ -230,7 +230,10 @@ wss.on('connection', ws => {
 const interval = setInterval(() => {
     wss.clients.forEach(client => {
         const ws = client as CustomWebSocket;
-        if (ws.isAlive === false) return ws.terminate();
+        if (ws.isAlive === false) {
+            console.log(`💔 Terminating unresponsive client: ${ws.id}`);
+            return ws.terminate();
+        }
         ws.isAlive = false;
         ws.ping();
     });
