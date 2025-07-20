@@ -66,7 +66,7 @@ const RefereeConnectionHubComponent = ({
                         <Input 
                             id="server-port" 
                             type="text" 
-                            value={`${settings.serverIp}:${settings.serverPort}`}
+                            value={settings.serverIp ? `${settings.serverIp}:${settings.serverPort}` : ''}
                             readOnly
                             placeholder="Enter IP to see address" 
                         />
