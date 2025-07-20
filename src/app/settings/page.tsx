@@ -190,9 +190,6 @@ export default function SettingsPage() {
             </TabsList>
             <TabsContent value="rules">
               <Card>
-                <CardContent className="text-sm text-muted-foreground p-6">
-                  Content for the WT Rules & Regulations is currently being prepared and will be available in a future update.
-                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
