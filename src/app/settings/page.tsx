@@ -10,7 +10,7 @@ import { Server, Wifi, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import PremiumSettings from '@/components/app/settings/premium-settings';
 import { useAuth } from '@/hooks/use-auth';
-import type { Referee } from '@/components/app/settings/referee-management';
+import type { Referee } from '@/components/app/settings/referee-connection-hub';
 import RefereeConnectionHub from '@/components/app/settings/referee-connection-hub';
 
 export type ConnectionMode = 'websocket' | 'udp';
