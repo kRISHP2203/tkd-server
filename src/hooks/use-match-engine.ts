@@ -133,24 +133,28 @@ export function useMatchEngine() {
       toast({ title: "Match Reset", description: "The match has been reset to its initial state." });
     }, [resetRoundState, settings.restTime, toast]);
     
-    const handleEndMatch = useCallback((winner: Winner) => {
-        setIsTimerRunning(false);
-        setMatchState('finished');
-        setMatchWinner(winner);
-        if (synth.current) {
-            playSound('A5');
-        }
-        toast({
-            title: "Match Over!",
-            description: winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
-            duration: 5000,
-        });
-
-        // Automatically restart the match after 5 seconds
+    const handleEndMatch = useCallback((winner: Winner, penalizedTeam?: 'red' | 'blue') => {
+        // Defer state updates to prevent "cannot update during render" errors
         setTimeout(() => {
-            resetMatch();
-        }, 5000);
+            setIsTimerRunning(false);
+            setMatchState('finished');
+            setMatchWinner(winner);
 
+            if (synth.current) {
+                playSound('A5');
+            }
+
+            toast({
+                title: "Match Over!",
+                description: winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
+                duration: 5000,
+            });
+
+            // Automatically restart the match after 5 seconds
+            setTimeout(() => {
+                resetMatch();
+            }, 5000);
+        }, 0);
     }, [playSound, toast, resetMatch]);
   
     const handleEndRound = useCallback((reason: 'time' | 'lead' | 'penalties', penalizedTeam?: 'red' | 'blue') => {
@@ -209,7 +213,7 @@ export function useMatchEngine() {
 
     }, [
         redScore, blueScore, redPenalties, bluePenalties,
-        settings.maxGamJeom, settings.totalRounds, redWins, blueWins, playSound, handleEndMatch, currentRound
+        settings.totalRounds, redWins, blueWins, playSound, handleEndMatch, currentRound
     ]);
     
     const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty') => {
@@ -228,6 +232,7 @@ export function useMatchEngine() {
               const newPenalties = redPenalties + points;
               if (newPenalties < 0) return;
               setRedPenalties(newPenalties);
+
               if (points > 0) setBlueScore(s => s + 1);
               else setBlueScore(s => Math.max(0, s - 1));
 
@@ -239,6 +244,7 @@ export function useMatchEngine() {
               const newPenalties = bluePenalties + points;
               if (newPenalties < 0) return;
               setBluePenalties(newPenalties);
+              
               if (points > 0) setRedScore(s => s + 1);
               else setRedScore(s => Math.max(0, s - 1));
 
@@ -252,7 +258,7 @@ export function useMatchEngine() {
       playSound('C4');
       setHistory(h => [...h, action]);
   
-    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties, redScore, blueScore]);
+    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties]);
   
     useEffect(() => {
       if (isTimerRunning && matchState === 'running') {
