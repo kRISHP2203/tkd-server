@@ -248,7 +248,7 @@ export function useMatchEngine() {
 
             setTimeout(() => {
                 resetMatch();
-            }, 5000);
+            }, 15000);
         }, 0);
     }, [playSound, toast, resetMatch, logMatchResult, redScore, blueScore]);
   
