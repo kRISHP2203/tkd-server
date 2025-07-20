@@ -55,27 +55,26 @@ const RefereeConnectionHubComponent = ({
                             onChange={(e) => setSettings(s => ({ ...s, serverIp: e.target.value }))}
                             placeholder="e.g. 192.168.1.X" 
                         />
+                         <Button variant="outline" size="icon" onClick={onCopyIp} title="Copy IP and Port">
+                            <Copy className="h-4 w-4" />
+                        </Button>
                     </div>
                     <p className="text-xs text-muted-foreground px-1">
                         Find IP: Win (`ipconfig`) or Mac/Linux (`ifconfig`).
                     </p>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="server-port">Connection Address</Label>
+                    <Label htmlFor="server-port">WebSocket Port</Label>
                     <div className="flex items-center gap-2">
                         <Input 
                             id="server-port" 
                             type="text" 
-                            value={settings.serverIp ? `${settings.serverIp}:${settings.serverPort}` : ''}
+                            value="8080"
                             readOnly
-                            placeholder="Enter IP to see address" 
                         />
-                        <Button variant="outline" size="icon" onClick={onCopyIp}>
-                            <Copy className="h-4 w-4" />
-                        </Button>
                     </div>
                      <p className="text-xs text-muted-foreground px-1">
-                        Referees connect to this address.
+                        The port is fixed and cannot be changed.
                     </p>
                 </div>
             </div>
