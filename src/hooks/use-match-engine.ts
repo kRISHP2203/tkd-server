@@ -6,6 +6,7 @@ import type { GameSettings } from '@/components/app/game-options-dialog';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
 import { useAuth } from './use-auth';
+import React from 'react';
 
 type Action = {
   type: 'score' | 'penalty';
@@ -242,8 +243,11 @@ export function useMatchEngine() {
 
             toast({
                 title: "Match Over!",
-                description: winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!",
-                duration: 5000,
+                description: React.createElement(React.Fragment, null,
+                    React.createElement('p', null, winner !== 'none' && winner !== 'tie' ? `${winner.charAt(0).toUpperCase() + winner.slice(1)} wins!` : "It's a tie!"),
+                    React.createElement('p', { className: "font-medium" }, "Game will restart automatically in 15 seconds.")
+                ),
+                duration: 14000,
             });
 
             setTimeout(() => {
