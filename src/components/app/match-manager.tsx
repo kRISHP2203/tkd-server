@@ -11,8 +11,6 @@ import ScorePanel from '@/components/app/score-panel';
 import GameOptionsDialog from '@/components/app/game-options-dialog';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { ShieldCheck } from 'lucide-react';
 
 export default function MatchManager() {
   const {

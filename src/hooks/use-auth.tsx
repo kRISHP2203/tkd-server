@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getDeviceId } from '@/lib/device';
-import { verifyLicense, registerDeviceToLicense, getPlanLimits } from '@/lib/auth-service';
+import { verifyLicense, registerDeviceToLicense, getPlanLimits, purchaseBasicPlan, purchaseElitePlan } from '@/lib/auth-service';
 import { useToast } from '@/hooks/use-toast';
 
 type Plan = 'free' | 'basic' | 'elite';
@@ -17,6 +17,8 @@ interface AuthContextType {
   isLoading: boolean;
   verifyAndSetLicense: (key: string) => Promise<void>;
   logout: () => void;
+  purchaseBasicPlan: () => Promise<void>;
+  purchaseElitePlan: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -30,14 +32,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  const setFreePlan = async () => {
+  const setFreePlan = useCallback(async () => {
     const limits = await getPlanLimits('free');
     setPlan('free');
     setMaxDevices(limits.maxDevices);
     setMaxReferees(limits.maxReferees);
     setLicenseKey(null);
     localStorage.removeItem('licenseKey');
-  }
+  }, []);
 
   const verifyAndSetLicense = useCallback(async (key: string) => {
     if (!deviceId) return;
@@ -51,7 +53,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const isAllowed = await registerDeviceToLicense(key, deviceId);
         if (!isAllowed) {
-            throw new Error("This license is active on too many devices.");
+            throw new Error(`This license is active on its limit of ${licenseData.maxDevices} devices.`);
         }
 
         const limits = await getPlanLimits(licenseData.plan);
@@ -75,34 +77,54 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
         setIsLoading(false);
     }
-  }, [deviceId, toast]);
+  }, [deviceId, toast, setFreePlan]);
 
-  useEffect(() => {
-    const deviceId = getDeviceId();
-    setDeviceId(deviceId);
-
-    const loadLicense = async () => {
+  const purchaseAndActivatePlan = useCallback(async (purchaseFn: (deviceId: string) => Promise<string | null>) => {
+      if (!deviceId) {
+          toast({ title: 'Error', description: 'Device ID not available. Cannot complete purchase.', variant: 'destructive' });
+          return;
+      }
       setIsLoading(true);
       try {
+          const newKey = await purchaseFn(deviceId);
+          if (!newKey) {
+              throw new Error("Failed to generate a new license key.");
+          }
+          await verifyAndSetLicense(newKey);
+      } catch (error: any) {
+          toast({
+              title: "Purchase Failed",
+              description: error.message,
+              variant: "destructive",
+          });
+          setIsLoading(false);
+      }
+  }, [deviceId, verifyAndSetLicense, toast]);
+
+  const purchaseBasicPlan = useCallback(() => purchaseAndActivatePlan(purchaseBasicPlan), [purchaseAndActivatePlan]);
+  const purchaseElitePlan = useCallback(() => purchaseAndActivatePlan(purchaseElitePlan), [purchaseAndActivatePlan]);
+
+
+  useEffect(() => {
+    const initAuth = async () => {
+        setIsLoading(true);
+        const id = getDeviceId();
+        setDeviceId(id);
+        
         const storedKey = localStorage.getItem('licenseKey');
         if (storedKey) {
-          await verifyAndSetLicense(storedKey);
+            await verifyAndSetLicense(storedKey);
         } else {
             await setFreePlan();
         }
-      } catch (error) {
-        console.error("Error loading license:", error);
-        await setFreePlan();
-      } finally {
         setIsLoading(false);
-      }
     };
-    loadLicense();
-  }, [verifyAndSetLicense]);
+    initAuth();
+  }, [verifyAndSetLicense, setFreePlan]);
 
   const logout = async () => {
+    // In a real app, you'd call a backend function to deregister the device from the license
     await setFreePlan();
-    // Here you would also call a backend function to deregister the device
     toast({ title: "Logged Out", description: "Your license has been deactivated on this device." });
   };
 
@@ -115,6 +137,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isLoading,
     verifyAndSetLicense,
     logout,
+    purchaseBasicPlan,
+    purchaseElitePlan,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

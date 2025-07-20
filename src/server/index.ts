@@ -160,7 +160,7 @@ wss.on('connection', ws => {
                     
                     if (currentReferees >= limits.maxReferees) {
                         console.log(`❌ Referee limit reached for ${customWs.licenseKey || 'free'}. Limit: ${limits.maxReferees}`);
-                        ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees }));
+                        ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees, plan: plan }));
                         return ws.terminate();
                     }
                 }
@@ -213,7 +213,8 @@ wss.on('connection', ws => {
         if (clientInfo) {
             broadcastToLicense(clientInfo.licenseKey, { action: 'referee_list', referees: getRefereeListForLicense(clientInfo.licenseKey) });
             if (clientInfo.licenseKey && clientInfo.deviceId) {
-                removeDeviceFromLicense(clientInfo.licenseKey, clientInfo.deviceId);
+                // In a real app, you might want to delay this to handle brief disconnects
+                // removeDeviceFromLicense(clientInfo.licenseKey, clientInfo.deviceId);
             }
         }
         clientData.delete(customWs.id);

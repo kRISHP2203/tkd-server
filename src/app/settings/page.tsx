@@ -137,7 +137,7 @@ export default function SettingsPage() {
   
   const handleResetConnections = () => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'reset_connections' }));
+        ws.send(JSON.stringify({ action: 'reset_connections', licenseKey }));
     }
     console.log('Resetting all referee connections...');
     toast({

@@ -1,6 +1,8 @@
 
 'use server';
 
+import { v4 as uuidv4 } from 'uuid';
+
 // This is a SIMULATED backend service.
 // In a real application, this would be replaced with calls to a real backend like Firebase or Supabase.
 
@@ -98,13 +100,61 @@ export async function removeDeviceFromLicense(key: string, deviceId: string) {
  * @returns An object with maxDevices and maxReferees.
  */
 export async function getPlanLimits(plan: Plan): Promise<{ maxDevices: number, maxReferees: number }> {
-    switch (plan) {
-        case 'basic':
-            return { maxDevices: 2, maxReferees: 4 };
-        case 'elite':
-            return { maxDevices: 6, maxReferees: 4 };
-        case 'free':
-        default:
-            return { maxDevices: 1, maxReferees: 1 };
-    }
+      switch (plan) {
+          case 'basic':
+              return { maxDevices: 2, maxReferees: 4 };
+          case 'elite':
+              return { maxDevices: 6, maxReferees: 4 };
+          case 'free':
+          default:
+              return { maxDevices: 1, maxReferees: 1 };
+      }
+}
+
+/**
+ * Simulates purchasing a Basic plan.
+ * @param deviceId The ID of the device making the purchase.
+ * @returns The newly generated license key.
+ */
+export async function purchaseBasicPlan(deviceId: string): Promise<string | null> {
+    console.log(`Simulating Basic Plan purchase for device: ${deviceId}`);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate payment processing
+
+    const newKey = `basic-key-${uuidv4().substring(0, 8)}`;
+    const newLicense: LicenseData = {
+        licenseKey: newKey,
+        plan: 'basic',
+        maxDevices: 2,
+        maxReferees: 4,
+        activeDevices: [deviceId], // Automatically register the purchasing device
+        createdAt: new Date().toISOString(),
+    };
+
+    licenses[newKey] = newLicense;
+    console.log(`✅ Basic Plan purchased. New key: ${newKey}`);
+    return newKey;
+}
+
+/**
+ * Simulates purchasing an Elite plan.
+ * @param deviceId The ID of the device making the purchase.
+ * @returns The newly generated license key.
+ */
+export async function purchaseElitePlan(deviceId: string): Promise<string | null> {
+    console.log(`Simulating Elite Plan purchase for device: ${deviceId}`);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate payment processing
+
+    const newKey = `elite-key-${uuidv4().substring(0, 8)}`;
+    const newLicense: LicenseData = {
+        licenseKey: newKey,
+        plan: 'elite',
+        maxDevices: 6,
+        maxReferees: 4,
+        activeDevices: [deviceId], // Automatically register the purchasing device
+        createdAt: new Date().toISOString(),
+    };
+
+    licenses[newKey] = newLicense;
+    console.log(`✅ Elite Plan purchased. New key: ${newKey}`);
+    return newKey;
 }
