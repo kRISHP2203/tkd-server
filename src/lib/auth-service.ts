@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 // This is a SIMULATED backend service.
 // In a real application, this would be replaced with calls to a real backend like Firebase or Supabase.
 
+const ADMIN_LICENSE_KEY = 'admin-master-key-unlimited';
+
 export type Plan = 'free' | 'basic' | 'elite';
 
 export interface LicenseData {
@@ -44,6 +46,20 @@ const licenses: Record<string, LicenseData> = {
  */
 export async function verifyLicense(key: string): Promise<LicenseData | null> {
     console.log(`Verifying license: ${key}`);
+
+    // Check for the hardcoded admin license key
+    if (key === ADMIN_LICENSE_KEY) {
+        console.log(`✅ Admin license key recognized. Granting full access.`);
+        return {
+            licenseKey: ADMIN_LICENSE_KEY,
+            plan: 'elite',
+            maxDevices: Infinity, // Unlimited devices
+            maxReferees: Infinity, // Unlimited referees
+            activeDevices: [],
+            createdAt: new Date().toISOString(),
+        };
+    }
+    
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
     return licenses[key] || null;
@@ -56,6 +72,11 @@ export async function verifyLicense(key: string): Promise<LicenseData | null> {
  * @returns True if the device was successfully registered, false if the device limit was reached.
  */
 export async function registerDeviceToLicense(key: string, deviceId: string): Promise<boolean> {
+    // Admin license always allows registration
+    if (key === ADMIN_LICENSE_KEY) {
+        return true;
+    }
+    
     const license = await verifyLicense(key);
     if (!license) return false;
 

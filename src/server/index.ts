@@ -3,6 +3,8 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { verifyLicense, getPlanLimits, removeDeviceFromLicense } from '@/lib/auth-service';
 
+const ADMIN_LICENSE_KEY = 'admin-master-key-unlimited';
+
 interface CustomWebSocket extends WebSocket {
   id: string;
   isAlive: boolean;
@@ -155,13 +157,16 @@ wss.on('connection', ws => {
                 clientData.set(customWs.id, { licenseKey: customWs.licenseKey, deviceId });
                 
                 if (action === 'register_referee') {
-                    const limits = await getPlanLimits(plan);
-                    const currentReferees = getRefereeCountForLicense(customWs.licenseKey);
-                    
-                    if (currentReferees >= limits.maxReferees) {
-                        console.log(`❌ Referee limit reached for ${customWs.licenseKey || 'free'}. Limit: ${limits.maxReferees}`);
-                        ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees, plan: plan }));
-                        return ws.terminate();
+                    // Admin key bypasses referee limits
+                    if (customWs.licenseKey !== ADMIN_LICENSE_KEY) {
+                        const limits = await getPlanLimits(plan);
+                        const currentReferees = getRefereeCountForLicense(customWs.licenseKey);
+                        
+                        if (currentReferees >= limits.maxReferees) {
+                            console.log(`❌ Referee limit reached for ${customWs.licenseKey || 'free'}. Limit: ${limits.maxReferees}`);
+                            ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees, plan: plan }));
+                            return ws.terminate();
+                        }
                     }
                 }
                 customWs.type = action === 'register_ui' ? 'ui' : 'referee';
