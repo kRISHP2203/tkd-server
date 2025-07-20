@@ -110,7 +110,7 @@ export default function PremiumSettings() {
                 <PlanDetails 
                     plan="basic"
                     title="Basic Plan"
-                    price="₹2,999 Lifetime"
+                    price="₹2499 Lifetime"
                     features={['Up to 4 referee devices', 'Use on 2 devices simultaneously']}
                     isCurrent={plan === 'basic'}
                     isDowngrade={false}
@@ -120,7 +120,7 @@ export default function PremiumSettings() {
                 <PlanDetails 
                     plan="elite"
                     title="Elite Plan"
-                    price="₹4,999 Lifetime"
+                    price="₹3999 Lifetime"
                     features={['Up to 4 referee devices', 'Use on 6 devices simultaneously']}
                     isCurrent={plan === 'elite'}
                     isDowngrade={plan === 'basic'}
