@@ -6,35 +6,36 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Users } from 'lucide-react';
 
+export interface Referee {
+    id: string;
+    lastSeen: string; // lastSeen will be managed by the server in a future update
+    status: 'connected' | 'disconnected';
+}
+
 interface RefereeManagementProps {
+    referees: Referee[];
     onResetConnections: () => void;
 }
 
-interface Referee {
-    id: string;
-    lastSeen: string;
-}
-
-const RefereeManagementComponent = ({ onResetConnections }: RefereeManagementProps) => {
-    // A mock list of referees for display purposes.
-    const authorizedReferees: Referee[] = [
-        { id: 'Referee-1', lastSeen: '2s ago' },
-        { id: 'Referee-2', lastSeen: '10s ago' },
-    ];
-
+const RefereeManagementComponent = ({ referees, onResetConnections }: RefereeManagementProps) => {
     return (
         <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-semibold flex items-center gap-2"><Users className="h-5 w-5" /> Authorized Referees</h3>
-            <div className="space-y-2">
-                {authorizedReferees.length > 0 ? (
-                    authorizedReferees.map(ref => (
+            <h3 className="font-semibold flex items-center gap-2"><Users className="h-5 w-5" /> Connected Referees</h3>
+            <div className="space-y-2 min-h-[100px]">
+                {referees.length > 0 ? (
+                    referees.map(ref => (
                         <div key={ref.id} className="flex items-center justify-between text-sm p-2 rounded-md bg-muted">
-                            <span className="font-mono">{ref.id}</span>
-                            <span className="text-muted-foreground">Last seen: {ref.lastSeen}</span>
+                            <span className="font-mono">{ref.id.substring(0, 8)}...</span>
+                            <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                                <span className="text-muted-foreground">{ref.status}</span>
+                            </div>
                         </div>
                     ))
                 ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">No referees connected.</p>
+                    <div className="flex items-center justify-center h-full text-sm text-muted-foreground text-center py-4">
+                        <p>Waiting for referees to connect...</p>
+                    </div>
                 )}
             </div>
             <Separator />
