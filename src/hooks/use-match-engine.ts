@@ -110,6 +110,26 @@ export function useMatchEngine() {
         return newIsRunning;
       });
     }, [matchState]);
+
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        const target = event.target as HTMLElement;
+        // Do not trigger if user is typing in an input field
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            return;
+        }
+
+        if (event.code === 'Space') {
+          event.preventDefault();
+          handleTimerToggle();
+        }
+      };
+  
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [handleTimerToggle]);
   
     const resetRoundState = useCallback(() => {
       setRedScore(0);
