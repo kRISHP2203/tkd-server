@@ -51,7 +51,7 @@ export default function ScorePanel({ team, score, wins, penalties, isWinner = fa
 
   return (
     <Card className={panelClasses}>
-      <CardHeader className={cn(!isRed && 'items-end')}>
+      <CardHeader>
         <CardTitle className={titleClasses}>
           {teamName}
         </CardTitle>
