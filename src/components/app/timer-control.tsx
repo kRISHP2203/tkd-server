@@ -43,7 +43,7 @@ const TimerControl = ({
           <Button
             size="icon"
             onClick={onToggleTimer}
-            className="text-xs h-8 w-8"
+            className="text-xs h-8 w-8 bg-yellow-500 text-black hover:bg-yellow-600"
             disabled={matchState === 'between_rounds' || matchState === 'finished'}
           >
             {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
