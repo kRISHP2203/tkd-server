@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,7 +29,7 @@ export type GameSettings = {
 
 const settingsSchema = z.object({
   roundTime: z.number().min(10, "Round time must be at least 10 seconds."),
-  totalRounds: z.number().min(1, "There must be at least 1 round."),
+  totalRounds: z.number().min(3, "Best-of-3 is the standard. Minimum 3 rounds required."),
   leadPoints: z.number().min(1, "Lead points must be at least 1."),
   restTime: z.number().min(10, "Rest time must be at least 10 seconds."),
   maxGamJeom: z.number().min(1, "Max penalties must be at least 1."),
