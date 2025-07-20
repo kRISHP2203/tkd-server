@@ -238,8 +238,11 @@ const interval = setInterval(() => {
     const now = Date.now();
     const beforeCount = signalQueue.length;
     signalQueue = signalQueue.filter(s => s.timestamp >= now - 5000);
+    // If the queue was populated but is now empty, clear the processed signatures cache.
+    // This prevents memory bloat between matches.
     if (beforeCount > 0 && signalQueue.length === 0) {
         processedSignatures.clear();
+        console.log('🚮 Cleared processed signal signatures cache.');
     }
 }, 5000);
 

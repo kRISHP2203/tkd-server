@@ -45,7 +45,7 @@ export default function HistoryPage() {
             <span>Match History</span>
           </CardTitle>
           <CardDescription>
-            Showing the last {history.length} of 5 recorded matches.
+            Showing the last {history.length} of 2 recorded matches.
           </CardDescription>
         </CardHeader>
         <CardContent>

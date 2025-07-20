@@ -219,8 +219,8 @@ export function useMatchEngine() {
             const historyString = localStorage.getItem('matchHistory');
             let history: MatchResult[] = historyString ? JSON.parse(historyString) : [];
             history.unshift(newResult);
-            if (history.length > 5) {
-                history = history.slice(0, 5);
+            if (history.length > 2) {
+                history = history.slice(0, 2);
             }
             localStorage.setItem('matchHistory', JSON.stringify(history));
         } catch(e) {
