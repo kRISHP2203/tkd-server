@@ -233,6 +233,7 @@ export function useMatchEngine() {
 
               if (newPenalties >= settings.maxGamJeom) {
                   handleEndRound('penalties');
+                  return; // Stop further execution
               }
           } else { // blue team
               const newPenalties = bluePenalties + points;
@@ -243,6 +244,7 @@ export function useMatchEngine() {
 
               if (newPenalties >= settings.maxGamJeom) {
                   handleEndRound('penalties');
+                  return; // Stop further execution
               }
           }
       }
@@ -250,7 +252,7 @@ export function useMatchEngine() {
       playSound('C4');
       setHistory(h => [...h, action]);
   
-    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties]);
+    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties, redScore, blueScore]);
   
     useEffect(() => {
       if (isTimerRunning && matchState === 'running') {
