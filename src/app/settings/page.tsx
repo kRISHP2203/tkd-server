@@ -24,7 +24,7 @@ export interface AppSettings {
 
 const defaultSettings: AppSettings = {
   connectionMode: 'websocket',
-  serverPort: 9000,
+  serverPort: 8080,
   connectionTimeout: 5000,
   autoReconnect: true,
   broadcastScore: false,
