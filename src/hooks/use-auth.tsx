@@ -3,7 +3,13 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getDeviceId } from '@/lib/device';
-import { verifyLicense, registerDeviceToLicense, getPlanLimits, purchaseBasicPlan, purchaseElitePlan } from '@/lib/auth-service';
+import { 
+    verifyLicense, 
+    registerDeviceToLicense, 
+    getPlanLimits, 
+    purchaseBasicPlan as purchaseBasicPlanService, 
+    purchaseElitePlan as purchaseElitePlanService 
+} from '@/lib/auth-service';
 import { useToast } from '@/hooks/use-toast';
 
 type Plan = 'free' | 'basic' | 'elite';
@@ -101,8 +107,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
   }, [deviceId, verifyAndSetLicense, toast]);
 
-  const purchaseBasicPlan = useCallback(() => purchaseAndActivatePlan(purchaseBasicPlan), [purchaseAndActivatePlan]);
-  const purchaseElitePlan = useCallback(() => purchaseAndActivatePlan(purchaseElitePlan), [purchaseAndActivatePlan]);
+  const purchaseBasicPlan = useCallback(() => purchaseAndActivatePlan(purchaseBasicPlanService), [purchaseAndActivatePlan]);
+  const purchaseElitePlan = useCallback(() => purchaseAndActivatePlan(purchaseElitePlanService), [purchaseAndActivatePlan]);
 
 
   useEffect(() => {
