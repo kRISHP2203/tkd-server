@@ -22,6 +22,34 @@ const defaultSettings: GameSettings = {
   maxGamJeom: 5,
 };
 
+// Define a global WebSocket instance
+let ws: WebSocket | null = null;
+
+const connectWebSocket = () => {
+  // Avoid creating multiple connections
+  if (ws && ws.readyState < 2) { // 0=CONNECTING, 1=OPEN
+    return;
+  }
+
+  ws = new WebSocket('ws://localhost:8080');
+
+  ws.onopen = () => {
+    console.log('✅ UI connected to WebSocket server');
+  };
+
+  ws.onclose = () => {
+    console.log('🔌 UI disconnected from WebSocket server');
+    // Optional: try to reconnect
+    setTimeout(connectWebSocket, 3000);
+  };
+
+  ws.onerror = (error) => {
+    // console.error('WebSocket error:', error);
+    ws?.close(); // Ensure connection is closed on error
+  };
+};
+
+
 export function useMatchEngine() {
     const [settings, setSettings] = useState<GameSettings>(defaultSettings);
     const [redScore, setRedScore] = useState(0);
@@ -62,17 +90,13 @@ export function useMatchEngine() {
   
     // Connect to the WebSocket server
     useEffect(() => {
-      const ws = new WebSocket('ws://localhost:8080');
+      connectWebSocket();
 
-      ws.onopen = () => {
-        console.log('✅ UI connected to WebSocket server');
-      };
-
-      ws.onmessage = (event) => {
+      const handleMessage = (event: MessageEvent) => {
         try {
           const message = JSON.parse(event.data.toString());
-          if (message.action && message.team && message.points) {
-            // Received a valid action from the server, update the score
+           if (message.action && message.team && message.points !== undefined) {
+             // Received a valid action from the server, update the score
             handleJudgeAction(message.team, message.points, message.action, true);
           }
         } catch (e) {
@@ -80,19 +104,13 @@ export function useMatchEngine() {
         }
       };
 
-      ws.onclose = () => {
-        console.log('🔌 UI disconnected from WebSocket server');
-      };
+      ws?.addEventListener('message', handleMessage);
 
-      ws.onerror = (error) => {
-        //console.error('WebSocket error:', error);
-      };
-
-      // Clean up the connection when the component unmounts
+      // Clean up the listener when the component unmounts
       return () => {
-        ws.close();
+        ws?.removeEventListener('message', handleMessage);
       };
-    }, []); // Empty dependency array ensures this runs only once
+    }, []); // handleJudgeAction is stable due to useCallback
 
     const handleSettingsSave = (newSettings: GameSettings) => {
       setSettings(newSettings);
@@ -272,10 +290,14 @@ export function useMatchEngine() {
       if (matchState === 'finished' || matchState === 'between_rounds') return;
       
       // If the action is from the local UI, broadcast it.
-      // We will add the WebSocket instance to do this in a future step.
-      // For now, this structure prevents infinite loops.
-      if (!fromRemote) {
-        // TODO: Broadcast to server
+      if (!fromRemote && ws && ws.readyState === WebSocket.OPEN) {
+          const message = {
+              action: type,
+              team,
+              points,
+              source: 'judge_control' // Differentiate from referee signals
+          };
+          ws.send(JSON.stringify(message));
       }
   
       const action: Action = { team, points, type };
