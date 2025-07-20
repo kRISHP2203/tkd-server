@@ -12,6 +12,7 @@ import PremiumSettings from '@/components/app/settings/premium-settings';
 import { useAuth } from '@/hooks/use-auth';
 import type { Referee } from '@/components/app/settings/referee-connection-hub';
 import RefereeConnectionHub from '@/components/app/settings/referee-connection-hub';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export type ConnectionMode = 'websocket' | 'udp';
 
@@ -182,6 +183,25 @@ export default function SettingsPage() {
               The WebSocket server port is fixed at 8080 and cannot be changed here.
             </AlertDescription>
           </Alert>
+          
+          <Tabs defaultValue="rules" className="w-full">
+            <TabsList>
+              <TabsTrigger value="rules">WT Rules & Regulations</TabsTrigger>
+            </TabsList>
+            <TabsContent value="rules">
+              <Card>
+                <CardHeader>
+                  <CardTitle>World Taekwondo Competition Rules</CardTitle>
+                  <CardDescription>
+                    Official rules and interpretations will be displayed here.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="text-sm text-muted-foreground">
+                  Content for the WT Rules & Regulations is currently being prepared and will be available in a future update.
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
 
           <Button size="lg" className="w-full" onClick={handleSave}>
             Save Settings
