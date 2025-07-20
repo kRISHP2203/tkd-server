@@ -52,7 +52,7 @@ const PlanDetails = ({
                 onClick={onPurchase}
                 disabled={isCurrent || isDowngrade || isLoading}
             >
-                {isLoading ? 'Processing...' : (isCurrent ? 'Active Plan' : (isDowngrade ? 'Active Plan is Higher' : `Purchase ${title}`))}
+                {isLoading ? 'Processing...' : (isCurrent ? 'Active Plan' : (isDowngrade ? 'Active Plan is Higher' : 'Purchase'))}
             </Button>
         </CardFooter>
     </Card>
