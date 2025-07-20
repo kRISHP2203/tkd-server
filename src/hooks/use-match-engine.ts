@@ -73,8 +73,6 @@ export function useMatchEngine() {
     }, [matchState]);
   
     useEffect(() => {
-      if (!licenseKey) return;
-
       const connectWebSocket = () => {
         if (ws && ws.readyState < 2) {
             return;
@@ -92,8 +90,8 @@ export function useMatchEngine() {
         ws.onmessage = (event: MessageEvent) => {
             try {
               const message = JSON.parse(event.data.toString());
-              if (message.action && message.team && message.points !== undefined) {
-                handleJudgeAction(message.team, message.points, message.action, true);
+              if (message.action === 'score' && message.team && message.points !== undefined) {
+                handleJudgeAction(message.team, message.points, 'score', true);
               }
             } catch (e) {
               console.error('Error parsing message from server:', e);

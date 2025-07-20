@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { getDeviceId } from '@/lib/device';
-import { verifyLicense, registerDeviceToLicense, getPlanLimits, LicenseData } from '@/lib/auth-service';
+import { verifyLicense, registerDeviceToLicense, getPlanLimits } from '@/lib/auth-service';
 import { useToast } from '@/hooks/use-toast';
 
 type Plan = 'free' | 'basic' | 'elite';
@@ -30,31 +30,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const deviceId = getDeviceId();
-    setDeviceId(deviceId);
-
-    const loadLicense = async () => {
-      setIsLoading(true);
-      try {
-        const storedKey = localStorage.getItem('licenseKey');
-        if (storedKey) {
-          await verifyAndSetLicense(storedKey);
-        } else {
-            setPlan('free');
-            setMaxDevices(1);
-            setMaxReferees(1);
-        }
-      } catch (error) {
-        console.error("Error loading license:", error);
-        setLicenseKey(null);
-        setPlan('free');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    loadLicense();
-  }, []);
+  const setFreePlan = async () => {
+    const limits = await getPlanLimits('free');
+    setPlan('free');
+    setMaxDevices(limits.maxDevices);
+    setMaxReferees(limits.maxReferees);
+    setLicenseKey(null);
+    localStorage.removeItem('licenseKey');
+  }
 
   const verifyAndSetLicense = useCallback(async (key: string) => {
     if (!deviceId) return;
@@ -71,7 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             throw new Error("This license is active on too many devices.");
         }
 
-        const limits = getPlanLimits(licenseData.plan);
+        const limits = await getPlanLimits(licenseData.plan);
         setLicenseKey(key);
         setPlan(licenseData.plan);
         setMaxDevices(limits.maxDevices);
@@ -83,11 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         });
 
     } catch (error: any) {
-        setLicenseKey(null);
-        setPlan('free');
-        setMaxDevices(1);
-        setMaxReferees(1);
-        localStorage.removeItem('licenseKey');
+        await setFreePlan();
         toast({
             title: "Activation Failed",
             description: error.message,
@@ -98,12 +77,31 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [deviceId, toast]);
 
-  const logout = () => {
-    setLicenseKey(null);
-    setPlan('free');
-    setMaxDevices(1);
-    setMaxReferees(1);
-    localStorage.removeItem('licenseKey');
+  useEffect(() => {
+    const deviceId = getDeviceId();
+    setDeviceId(deviceId);
+
+    const loadLicense = async () => {
+      setIsLoading(true);
+      try {
+        const storedKey = localStorage.getItem('licenseKey');
+        if (storedKey) {
+          await verifyAndSetLicense(storedKey);
+        } else {
+            await setFreePlan();
+        }
+      } catch (error) {
+        console.error("Error loading license:", error);
+        await setFreePlan();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadLicense();
+  }, [verifyAndSetLicense]);
+
+  const logout = async () => {
+    await setFreePlan();
     // Here you would also call a backend function to deregister the device
     toast({ title: "Logged Out", description: "Your license has been deactivated on this device." });
   };

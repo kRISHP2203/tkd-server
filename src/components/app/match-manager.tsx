@@ -38,7 +38,7 @@ export default function MatchManager() {
     setIsOptionsDialogOpen
   } = useMatchEngine();
   
-  const { licenseKey, plan, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   const isFinished = matchState === 'finished';
   const isBetweenRounds = matchState === 'between_rounds';
 
@@ -48,23 +48,6 @@ export default function MatchManager() {
             <p className="text-muted-foreground">Loading...</p>
         </div>
     )
-  }
-  
-  if (!licenseKey) {
-    return (
-        <div className="flex flex-col gap-4 items-center justify-center min-h-screen bg-background p-8 text-center">
-            <Alert variant="destructive" className="max-w-md">
-                <ShieldCheck className="h-4 w-4" />
-                <AlertTitle>Premium Access Required</AlertTitle>
-                <AlertDescription>
-                    Please enter a valid license key on the settings page to use the scoring server.
-                </AlertDescription>
-            </Alert>
-            <Button asChild>
-                <Link href="/settings">Go to Settings</Link>
-            </Button>
-        </div>
-    );
   }
 
   return (
