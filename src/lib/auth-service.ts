@@ -21,16 +21,16 @@ export interface LicenseData {
 
 // Mock database
 const licenses: Record<string, LicenseData> = {
-    'basic-key-123': {
-        licenseKey: 'basic-key-123',
+    'basic-key-1234-5678-9012-3456': {
+        licenseKey: 'basic-key-1234-5678-9012-3456',
         plan: 'basic',
         maxDevices: 2,
         maxReferees: 4,
         activeDevices: [],
         createdAt: new Date().toISOString(),
     },
-    'elite-key-456': {
-        licenseKey: 'elite-key-456',
+    'elite-key-9876-5432-1098-7654': {
+        licenseKey: 'elite-key-9876-5432-1098-7654',
         plan: 'elite',
         maxDevices: 6,
         maxReferees: 4,
@@ -132,6 +132,17 @@ export async function getPlanLimits(plan: Plan): Promise<{ maxDevices: number, m
       }
 }
 
+const generateSecureKey = (prefix: 'basic' | 'elite'): string => {
+    const randomPart = uuidv4().replace(/-/g, '').substring(0, 16).toUpperCase();
+    const segments = [
+        randomPart.substring(0, 4),
+        randomPart.substring(4, 8),
+        randomPart.substring(8, 12),
+        randomPart.substring(12, 16),
+    ];
+    return `${prefix}-key-${segments.join('-')}`;
+}
+
 /**
  * Simulates purchasing a Basic plan.
  * @param deviceId The ID of the device making the purchase.
@@ -141,7 +152,7 @@ export async function purchaseBasicPlan(deviceId: string): Promise<string | null
     console.log(`Simulating Basic Plan purchase for device: ${deviceId}`);
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate payment processing
 
-    const newKey = `basic-key-${uuidv4().substring(0, 8)}`;
+    const newKey = generateSecureKey('basic');
     const newLicense: LicenseData = {
         licenseKey: newKey,
         plan: 'basic',
@@ -165,7 +176,7 @@ export async function purchaseElitePlan(deviceId: string): Promise<string | null
     console.log(`Simulating Elite Plan purchase for device: ${deviceId}`);
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate payment processing
 
-    const newKey = `elite-key-${uuidv4().substring(0, 8)}`;
+    const newKey = generateSecureKey('elite');
     const newLicense: LicenseData = {
         licenseKey: newKey,
         plan: 'elite',
