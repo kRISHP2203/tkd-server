@@ -10,6 +10,8 @@ import { Server, Wifi, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ConnectionSettings from '@/components/app/settings/connection-settings';
 import RefereeManagement, { Referee } from '@/components/app/settings/referee-management';
+import PremiumSettings from '@/components/app/settings/premium-settings';
+import { useAuth } from '@/hooks/use-auth';
 
 export type ConnectionMode = 'websocket' | 'udp';
 
@@ -37,13 +39,13 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [referees, setReferees] = useState<Referee[]>([]);
   const { toast } = useToast();
+  const { licenseKey, plan, deviceId } = useAuth();
 
   useEffect(() => {
     try {
       const savedSettings = localStorage.getItem('appSettings');
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
-        // Ensure server port is not overwritten by local settings
         setSettings({ ...defaultSettings, ...parsed, serverPort: 8080 });
       }
     } catch (e) {
@@ -52,9 +54,7 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    // Function to establish WebSocket connection
     const connect = () => {
-      // Avoid creating multiple connections
       if (ws && ws.readyState < 2) {
         return;
       }
@@ -63,8 +63,9 @@ export default function SettingsPage() {
 
       ws.onopen = () => {
         console.log('✅ Settings page connected to WebSocket server');
-        // Request referee list on connection
-        ws?.send(JSON.stringify({ action: 'get_referees' }));
+        if (ws?.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ action: 'get_referees', licenseKey, deviceId }));
+        }
       };
 
       ws.onmessage = (event) => {
@@ -72,6 +73,12 @@ export default function SettingsPage() {
           const message = JSON.parse(event.data.toString());
           if (message.action === 'referee_list') {
             setReferees(message.referees);
+          } else if (message.error === 'MAX_REFEREES_REACHED') {
+            toast({
+              title: "Referee Limit Reached",
+              description: `Your '${plan}' plan only allows for ${message.limit} referees.`,
+              variant: 'destructive'
+            });
           }
         } catch (e) {
           console.error('Error parsing message on settings page:', e);
@@ -80,23 +87,20 @@ export default function SettingsPage() {
 
       ws.onclose = () => {
         console.log('🔌 Settings page disconnected from WebSocket server');
-        // Optional: try to reconnect after a delay
         setTimeout(connect, 3000);
       };
 
       ws.onerror = (error) => {
-        // console.error('WebSocket error on settings page:', error);
-        ws?.close(); // Ensure connection is closed on error
+        ws?.close();
       };
     };
 
     connect();
 
-    // Clean up the connection when the component unmounts
     return () => {
       ws?.close();
     };
-  }, []);
+  }, [licenseKey, deviceId, plan, toast]);
 
   const handleSave = () => {
     try {
@@ -155,11 +159,13 @@ export default function SettingsPage() {
             <span>Connection Settings</span>
           </CardTitle>
           <CardDescription>
-            Configure how the server connects with referee devices.
+            Configure the server, connected referees, and your premium plan.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           
+          <PremiumSettings />
+
           <ConnectionSettings 
             settings={settings}
             setSettings={setSettings}

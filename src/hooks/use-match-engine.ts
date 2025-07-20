@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { GameSettings } from '@/components/app/game-options-dialog';
 import { useToast } from "@/hooks/use-toast";
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from './use-auth';
 
 type Action = {
   type: 'score' | 'penalty';
@@ -30,33 +31,7 @@ const defaultSettings: GameSettings = {
   maxGamJeom: 5,
 };
 
-// Define a global WebSocket instance
 let ws: WebSocket | null = null;
-
-const connectWebSocket = () => {
-  // Avoid creating multiple connections
-  if (ws && ws.readyState < 2) { // 0=CONNECTING, 1=OPEN
-    return;
-  }
-
-  ws = new WebSocket('ws://localhost:8080');
-
-  ws.onopen = () => {
-    console.log('✅ UI connected to WebSocket server');
-  };
-
-  ws.onclose = () => {
-    console.log('🔌 UI disconnected from WebSocket server');
-    // Optional: try to reconnect
-    setTimeout(connectWebSocket, 3000);
-  };
-
-  ws.onerror = (error) => {
-    // console.error('WebSocket error:', error);
-    ws?.close(); // Ensure connection is closed on error
-  };
-};
-
 
 export function useMatchEngine() {
     const [settings, setSettings] = useState<GameSettings>(defaultSettings);
@@ -79,6 +54,7 @@ export function useMatchEngine() {
     const synth = useRef<any>(null);
     const isPlaying = useRef(false);
     const { toast } = useToast();
+    const { licenseKey, deviceId } = useAuth();
   
     useEffect(() => {
       try {
@@ -96,29 +72,50 @@ export function useMatchEngine() {
       }
     }, [matchState]);
   
-    // Connect to the WebSocket server
     useEffect(() => {
+      if (!licenseKey) return;
+
+      const connectWebSocket = () => {
+        if (ws && ws.readyState < 2) {
+            return;
+        }
+
+        ws = new WebSocket('ws://localhost:8080');
+
+        ws.onopen = () => {
+            console.log('✅ UI connected to WebSocket server');
+            if (ws?.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ licenseKey, deviceId, action: 'register_ui' }));
+            }
+        };
+
+        ws.onmessage = (event: MessageEvent) => {
+            try {
+              const message = JSON.parse(event.data.toString());
+              if (message.action && message.team && message.points !== undefined) {
+                handleJudgeAction(message.team, message.points, message.action, true);
+              }
+            } catch (e) {
+              console.error('Error parsing message from server:', e);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('🔌 UI disconnected from WebSocket server');
+            setTimeout(connectWebSocket, 3000);
+        };
+
+        ws.onerror = (error) => {
+            ws?.close();
+        };
+      };
+
       connectWebSocket();
 
-      const handleMessage = (event: MessageEvent) => {
-        try {
-          const message = JSON.parse(event.data.toString());
-           if (message.action && message.team && message.points !== undefined) {
-             // Received a valid action from the server, update the score
-            handleJudgeAction(message.team, message.points, message.action, true);
-          }
-        } catch (e) {
-          console.error('Error parsing message from server:', e);
-        }
-      };
-
-      ws?.addEventListener('message', handleMessage);
-
-      // Clean up the listener when the component unmounts
       return () => {
-        ws?.removeEventListener('message', handleMessage);
-      };
-    }, []); // handleJudgeAction is stable due to useCallback
+          ws?.close();
+      }
+    }, [licenseKey, deviceId]);
 
     const handleSettingsSave = (newSettings: GameSettings) => {
       setSettings(newSettings);
@@ -174,7 +171,6 @@ export function useMatchEngine() {
     useEffect(() => {
       const handleKeyDown = (event: KeyboardEvent) => {
         const target = event.target as HTMLElement;
-        // Do not trigger if user is typing in an input field
         if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
             return;
         }
@@ -320,13 +316,12 @@ export function useMatchEngine() {
     const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty', fromRemote: boolean = false) => {
       if (matchState === 'finished' || matchState === 'between_rounds') return;
       
-      // If the action is from the local UI, broadcast it.
       if (!fromRemote && ws && ws.readyState === WebSocket.OPEN) {
           const message = {
               action: type,
               team,
               points,
-              source: 'judge_control' // Differentiate from referee signals
+              source: 'judge_control'
           };
           ws.send(JSON.stringify(message));
       }
@@ -352,7 +347,7 @@ export function useMatchEngine() {
                   handleEndRound('penalties', 'red');
                   return; 
               }
-          } else { // blue team
+          } else {
               const newPenalties = bluePenalties + points;
               if (newPenalties < 0) return;
               setBluePenalties(newPenalties);
