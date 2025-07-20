@@ -192,17 +192,24 @@ export function useMatchEngine() {
       
       setRoundWinner(winnerOfRound);
       
-      const roundsNeededToWin = Math.ceil(settings.totalRounds / 2);
+      const roundsNeededToWin = 2; // Best of 3 means you need 2 rounds to win.
       if (newRedWins >= roundsNeededToWin || newBlueWins >= roundsNeededToWin) {
           handleEndMatch(newRedWins > newBlueWins ? 'red' : 'blue');
           return;
       }
       
       if (currentRound >= settings.totalRounds) {
-        let finalWinner: Winner = 'tie';
-        if (newRedWins > newBlueWins) finalWinner = 'red';
-        else if (newBlueWins > newRedWins) finalWinner = 'blue';
-        handleEndMatch(finalWinner);
+        if (newRedWins === newBlueWins && newRedWins > 0) {
+            // If tied in round wins (e.g., 1-1), force a 3rd round.
+            setSettings(s => ({...s, totalRounds: 3}));
+            setMatchState('between_rounds');
+        } else {
+            // If not tied in round wins, or it was a 0-0 tie, determine final winner.
+            let finalWinner: Winner = 'tie';
+            if (newRedWins > newBlueWins) finalWinner = 'red';
+            else if (newBlueWins > newRedWins) finalWinner = 'blue';
+            handleEndMatch(finalWinner);
+        }
       } else {
          setMatchState('between_rounds');
       }
@@ -224,23 +231,29 @@ export function useMatchEngine() {
           setBlueScore(s => Math.max(0, s + points));
         }
       } else if (type === 'penalty') {
-        if (team === 'red') {
-          const newPenalties = redPenalties + points;
-          if (newPenalties < 0) return;
-          setRedPenalties(newPenalties);
-          setBlueScore(s => Math.max(0, s + (points > 0 ? 1 : -1) ));
-          if (newPenalties >= settings.maxGamJeom) {
-            handleEndRound('penalties');
+          if (team === 'red') {
+              const newPenalties = redPenalties + points;
+              if (newPenalties < 0) return;
+              setRedPenalties(newPenalties);
+              // Only add/remove points if it's not a correction of a mistake
+              if (points > 0) setBlueScore(s => s + 1);
+              else setBlueScore(s => Math.max(0, s - 1));
+
+              if (newPenalties >= settings.maxGamJeom) {
+                  handleEndRound('penalties');
+              }
+          } else { // blue team
+              const newPenalties = bluePenalties + points;
+              if (newPenalties < 0) return;
+              setBluePenalties(newPenalties);
+               // Only add/remove points if it's not a correction of a mistake
+              if (points > 0) setRedScore(s => s + 1);
+              else setRedScore(s => Math.max(0, s - 1));
+
+              if (newPenalties >= settings.maxGamJeom) {
+                  handleEndRound('penalties');
+              }
           }
-        } else {
-          const newPenalties = bluePenalties + points;
-          if (newPenalties < 0) return;
-          setBluePenalties(newPenalties);
-          setRedScore(s => Math.max(0, s + (points > 0 ? 1 : -1) ));
-          if (newPenalties >= settings.maxGamJeom) {
-            handleEndRound('penalties');
-          }
-        }
       }
   
       playSound('C4');
