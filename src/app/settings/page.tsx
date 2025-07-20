@@ -190,13 +190,7 @@ export default function SettingsPage() {
             </TabsList>
             <TabsContent value="rules">
               <Card>
-                <CardHeader>
-                  <CardTitle>World Taekwondo Competition Rules</CardTitle>
-                  <CardDescription>
-                    Official rules and interpretations will be displayed here.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="text-sm text-muted-foreground">
+                <CardContent className="text-sm text-muted-foreground p-6">
                   Content for the WT Rules & Regulations is currently being prepared and will be available in a future update.
                 </CardContent>
               </Card>
