@@ -21,8 +21,10 @@ export default function ImmersiveModePrompt({ onEnter }: ImmersiveModePromptProp
   }, []);
 
   if (!isClient || !isMobile) {
-    // On desktop or during server-side rendering, just show the app directly.
-    // The parent component will handle the state transition.
+    // On desktop or during server-side rendering, we want to bypass the prompt.
+    // The parent component (`page.tsx`) should handle this by setting `isImmersive` to true immediately.
+    // The `useEffect` here was causing the "Fullscreen request denied" error on desktop.
+    // We rely on the parent component's logic to handle this now.
     useEffect(() => {
         onEnter();
     }, [onEnter]);
