@@ -47,20 +47,18 @@ const licenses: Record<string, LicenseData> = {
 export async function verifyLicense(key: string): Promise<LicenseData | null> {
     console.log(`Verifying license: ${key}`);
 
-    // Check for the hardcoded admin license key
     if (key === ADMIN_LICENSE_KEY) {
         console.log(`✅ Admin license key recognized. Granting full access.`);
         return {
             licenseKey: ADMIN_LICENSE_KEY,
             plan: 'elite',
-            maxDevices: Infinity, // Unlimited devices
-            maxReferees: Infinity, // Unlimited referees
+            maxDevices: Infinity,
+            maxReferees: Infinity,
             activeDevices: [],
             createdAt: new Date().toISOString(),
         };
     }
     
-    // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 500));
     return licenses[key] || null;
 }
@@ -72,7 +70,6 @@ export async function verifyLicense(key: string): Promise<LicenseData | null> {
  * @returns True if the device was successfully registered, false if the device limit was reached.
  */
 export async function registerDeviceToLicense(key: string, deviceId: string): Promise<boolean> {
-    // Admin license always allows registration
     if (key === ADMIN_LICENSE_KEY) {
         return true;
     }
@@ -80,19 +77,16 @@ export async function registerDeviceToLicense(key: string, deviceId: string): Pr
     const license = await verifyLicense(key);
     if (!license) return false;
 
-    // If device is already active, it's allowed
     if (license.activeDevices.includes(deviceId)) {
         console.log(`Device ${deviceId} already registered to license ${key}.`);
         return true;
     }
 
-    // Check if the device limit has been reached
     if (license.activeDevices.length >= license.maxDevices) {
         console.error(`Device limit reached for license ${key}. Max: ${license.maxDevices}`);
         return false;
     }
     
-    // Add the new device
     license.activeDevices.push(deviceId);
     console.log(`Device ${deviceId} successfully registered to license ${key}. Active devices:`, license.activeDevices);
     return true;
@@ -144,49 +138,28 @@ const generateSecureKey = (prefix: 'basic' | 'elite'): string => {
 }
 
 /**
- * Simulates purchasing a Basic plan.
+ * Simulates creating/updating a license after a successful payment.
+ * In a real app, this would be more robust.
+ * @param plan The plan purchased.
  * @param deviceId The ID of the device making the purchase.
  * @returns The newly generated license key.
  */
-export async function purchaseBasicPlan(deviceId: string): Promise<string | null> {
-    console.log(`Simulating Basic Plan purchase for device: ${deviceId}`);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate payment processing
+export async function updateLicenseOnPayment(plan: Plan, deviceId: string): Promise<string | null> {
+    console.log(`Updating license for plan ${plan} for device: ${deviceId}`);
+    await new Promise(resolve => setTimeout(resolve, 500)); 
 
-    const newKey = generateSecureKey('basic');
+    const newKey = generateSecureKey(plan === 'basic' ? 'basic' : 'elite');
+    const limits = await getPlanLimits(plan);
     const newLicense: LicenseData = {
         licenseKey: newKey,
-        plan: 'basic',
-        maxDevices: 2,
-        maxReferees: 4,
-        activeDevices: [deviceId], // Automatically register the purchasing device
+        plan: plan,
+        maxDevices: limits.maxDevices,
+        maxReferees: limits.maxReferees,
+        activeDevices: [deviceId], 
         createdAt: new Date().toISOString(),
     };
 
     licenses[newKey] = newLicense;
-    console.log(`✅ Basic Plan purchased. New key: ${newKey}`);
-    return newKey;
-}
-
-/**
- * Simulates purchasing an Elite plan.
- * @param deviceId The ID of the device making the purchase.
- * @returns The newly generated license key.
- */
-export async function purchaseElitePlan(deviceId: string): Promise<string | null> {
-    console.log(`Simulating Elite Plan purchase for device: ${deviceId}`);
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate payment processing
-
-    const newKey = generateSecureKey('elite');
-    const newLicense: LicenseData = {
-        licenseKey: newKey,
-        plan: 'elite',
-        maxDevices: 6,
-        maxReferees: 4,
-        activeDevices: [deviceId], // Automatically register the purchasing device
-        createdAt: new Date().toISOString(),
-    };
-
-    licenses[newKey] = newLicense;
-    console.log(`✅ Elite Plan purchased. New key: ${newKey}`);
+    console.log(`✅ License created/updated. New key: ${newKey}`);
     return newKey;
 }

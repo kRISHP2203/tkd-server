@@ -2,6 +2,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { AuthProvider } from '@/hooks/use-auth';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   title: 'TKD Wifi Server',
@@ -25,6 +26,7 @@ export default function RootLayout({
           {children}
           <Toaster />
         </AuthProvider>
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );

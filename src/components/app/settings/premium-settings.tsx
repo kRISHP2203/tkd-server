@@ -64,8 +64,7 @@ export default function PremiumSettings() {
         plan, 
         verifyAndSetLicense, 
         isLoading,
-        purchaseBasicPlan,
-        purchaseElitePlan
+        purchasePlan,
     } = useAuth();
     const [inputKey, setInputKey] = React.useState(licenseKey || '');
 
@@ -109,7 +108,7 @@ export default function PremiumSettings() {
                     features={['Up to 4 referee devices', 'Use on 2 devices simultaneously']}
                     isCurrent={plan === 'basic'}
                     isDowngrade={false}
-                    onPurchase={purchaseBasicPlan}
+                    onPurchase={() => purchasePlan('basic', 2499)}
                     isLoading={isLoading}
                 />
                 <PlanDetails 
@@ -119,7 +118,7 @@ export default function PremiumSettings() {
                     features={['Up to 4 referee devices', 'Use on 6 devices simultaneously']}
                     isCurrent={plan === 'elite'}
                     isDowngrade={plan === 'basic'}
-                    onPurchase={purchaseElitePlan}
+                    onPurchase={() => purchasePlan('elite', 3999)}
                     isLoading={isLoading}
                 />
             </div>

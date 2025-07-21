@@ -6,9 +6,7 @@ import { getDeviceId } from '@/lib/device';
 import { 
     verifyLicense, 
     registerDeviceToLicense, 
-    getPlanLimits, 
-    purchaseBasicPlan as purchaseBasicPlanService, 
-    purchaseElitePlan as purchaseElitePlanService 
+    getPlanLimits,
 } from '@/lib/auth-service';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,11 +21,16 @@ interface AuthContextType {
   isLoading: boolean;
   verifyAndSetLicense: (key: string) => Promise<void>;
   logout: () => void;
-  purchaseBasicPlan: () => Promise<void>;
-  purchaseElitePlan: () => Promise<void>;
+  purchasePlan: (plan: Plan, amount: number) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+declare global {
+    interface Window {
+        Razorpay: any;
+    }
+}
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [licenseKey, setLicenseKey] = useState<string | null>(null);
@@ -84,32 +87,98 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsLoading(false);
     }
   }, [deviceId, toast, setFreePlan]);
+  
+  const purchasePlan = useCallback(async (plan: Plan, amount: number) => {
+    if (!deviceId) {
+        toast({ title: 'Error', description: 'Device ID not available. Cannot complete purchase.', variant: 'destructive' });
+        return;
+    }
+    setIsLoading(true);
 
-  const purchaseAndActivatePlan = useCallback(async (purchaseFn: (deviceId: string) => Promise<string | null>) => {
-      if (!deviceId) {
-          toast({ title: 'Error', description: 'Device ID not available. Cannot complete purchase.', variant: 'destructive' });
-          return;
-      }
-      setIsLoading(true);
-      try {
-          const newKey = await purchaseFn(deviceId);
-          if (!newKey) {
-              throw new Error("Failed to generate a new license key.");
-          }
-          await verifyAndSetLicense(newKey);
-      } catch (error: any) {
-          toast({
-              title: "Purchase Failed",
-              description: error.message,
-              variant: "destructive",
-          });
-          setIsLoading(false);
-      }
-  }, [deviceId, verifyAndSetLicense, toast]);
+    try {
+        const res = await fetch('/api/razorpay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount, plan, deviceId }),
+        });
 
-  const purchaseBasicPlan = useCallback(() => purchaseAndActivatePlan(purchaseBasicPlanService), [purchaseAndActivatePlan]);
-  const purchaseElitePlan = useCallback(() => purchaseAndActivatePlan(purchaseElitePlanService), [purchaseAndActivatePlan]);
+        if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to create Razorpay order.');
+        }
+        
+        const order = await res.json();
 
+        const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: order.amount,
+            currency: order.currency,
+            name: 'TKD WiFi Server',
+            description: `Purchase ${plan} Plan`,
+            order_id: order.id,
+            handler: async function (response: any) {
+                try {
+                    const verificationRes = await fetch('/api/razorpay', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            orderId: response.razorpay_order_id,
+                            paymentId: response.razorpay_payment_id,
+                            signature: response.razorpay_signature,
+                            plan,
+                            deviceId,
+                        }),
+                    });
+
+                    if (!verificationRes.ok) {
+                        const errorData = await verificationRes.json();
+                        throw new Error(errorData.error || 'Payment verification failed.');
+                    }
+                    
+                    const verificationData = await verificationRes.json();
+                    
+                    if (verificationData.success) {
+                        await verifyAndSetLicense(verificationData.licenseKey);
+                    } else {
+                        throw new Error('Payment verification failed on server.');
+                    }
+                } catch (error: any) {
+                     toast({ title: 'Payment Error', description: error.message, variant: 'destructive' });
+                } finally {
+                    setIsLoading(false);
+                }
+            },
+            prefill: {
+                name: 'TKD Customer',
+                email: 'customer@example.com',
+                contact: '9999999999',
+            },
+            notes: {
+                address: 'TKD WiFi Server Purchase'
+            },
+            theme: {
+                color: '#3399cc'
+            }
+        };
+        
+        const rzp = new window.Razorpay(options);
+        rzp.on('payment.failed', function (response: any){
+            console.error(response.error.code);
+            console.error(response.error.description);
+            toast({
+                title: 'Payment Failed',
+                description: response.error.description,
+                variant: 'destructive',
+            });
+            setIsLoading(false);
+        });
+        rzp.open();
+
+    } catch (error: any) {
+        toast({ title: 'Purchase Error', description: error.message, variant: 'destructive' });
+        setIsLoading(false);
+    }
+  }, [deviceId, toast, verifyAndSetLicense]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -143,8 +212,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isLoading,
     verifyAndSetLicense,
     logout,
-    purchaseBasicPlan,
-    purchaseElitePlan,
+    purchasePlan,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
