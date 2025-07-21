@@ -78,12 +78,7 @@ export default function PremiumSettings() {
     };
 
     return (
-        <div className="space-y-4 rounded-lg border p-4">
-            <h3 className="font-semibold flex items-center gap-2">
-                <ShieldCheck className="h-5 w-5" />
-                License & Plan Management
-            </h3>
-            
+        <div className="space-y-6">
             <div className="space-y-2">
                 <Label htmlFor="license-key">Your License Key</Label>
                 <div className="flex items-center gap-2">

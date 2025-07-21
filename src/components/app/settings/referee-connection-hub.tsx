@@ -44,12 +44,11 @@ const RefereeConnectionHubComponent = ({
     }, []);
 
     return (
-        <div className="space-y-4 rounded-lg border p-4">
+        <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="font-semibold flex items-center gap-2">
-                    <Wifi className="h-5 w-5" />
-                    Connect Referees
-                </h3>
+                 <p className="text-sm text-muted-foreground">
+                    Enter this device's local IP address into the referee apps to connect.
+                </p>
                 <div className="text-sm font-medium text-muted-foreground">
                     <span className="font-bold text-foreground">{referees.length}</span> / {maxReferees === Infinity ? 'Unlimited' : maxReferees} Connected
                 </div>

@@ -6,16 +6,16 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Wifi, X, AlertTriangle, ShieldCheck, Network, Info } from 'lucide-react';
+import { Server, Wifi, X, AlertTriangle, ShieldCheck, Network, Info, KeyRound, HelpCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/use-auth';
 import type { Referee } from '@/components/app/settings/referee-connection-hub';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const PremiumSettings = lazy(() => import('@/components/app/settings/premium-settings'));
 const RefereeConnectionHub = lazy(() => import('@/components/app/settings/referee-connection-hub'));
+const TroubleshootingGuide = lazy(() => import('@/components/app/settings/troubleshooting-guide'));
 
 export type ConnectionMode = 'websocket' | 'udp';
 
@@ -40,26 +40,10 @@ const defaultSettings: AppSettings = {
 let ws: WebSocket | null = null;
 
 const SettingsSkeleton = () => (
-    <div className="space-y-6">
-        <div className="space-y-4 rounded-lg border p-4">
-            <Skeleton className="h-6 w-1/2" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-1/4" />
-                <div className="flex gap-2">
-                    <Skeleton className="h-10 flex-grow" />
-                    <Skeleton className="h-10 w-24" />
-                </div>
-            </div>
-            <div className="grid md:grid-cols-2 gap-4 pt-2">
-                <Skeleton className="h-48 w-full" />
-                <Skeleton className="h-48 w-full" />
-            </div>
-        </div>
-        <div className="space-y-4 rounded-lg border p-4">
-            <Skeleton className="h-6 w-1/3" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-20 w-full" />
-        </div>
+    <div className="space-y-4 p-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full" />
     </div>
 );
 
@@ -68,7 +52,8 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [referees, setReferees] = useState<Referee[]>([]);
   const { toast } = useToast();
-  const { licenseKey, plan, deviceId, maxReferees } = useAuth();
+  const { licenseKey, deviceId, plan, maxReferees } = useAuth();
+  const [activeAccordionItem, setActiveAccordionItem] = useState<string | undefined>("premium");
 
   useEffect(() => {
     try {
@@ -131,22 +116,6 @@ export default function SettingsPage() {
     };
   }, [licenseKey, deviceId, plan, toast]);
 
-  const handleSave = () => {
-    try {
-      localStorage.setItem('appSettings', JSON.stringify({ ...settings, serverPort: 8080 }));
-      toast({
-        title: 'Settings Saved',
-        description: 'Your new settings have been saved locally.',
-      });
-    } catch(e) {
-      console.error("Failed to save settings", e);
-      toast({
-        title: 'Error saving settings',
-        description: 'Could not save settings to local storage.',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleCopyIp = () => {
     if (settings.serverIp) {
@@ -177,119 +146,67 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-body">
+    <div className="flex min-h-screen items-start justify-center bg-background p-4 font-body md:items-center">
       <Card className="w-full max-w-2xl relative">
-        <Link href="/" className="absolute top-4 right-4 text-muted-foreground hover:text-foreground">
+        <Link href="/" className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10">
             <X className="h-6 w-6" />
         </Link>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wifi className="h-6 w-6" />
-            <span>Connection Settings</span>
+            <span>Connection & Settings</span>
           </CardTitle>
           <CardDescription>
-            Configure the server, connected referees, and your premium plan.
+            Manage connections, your license, and get help.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="p-0 md:p-6 md:pt-0">
           <Suspense fallback={<SettingsSkeleton />}>
-            <PremiumSettings />
-            <RefereeConnectionHub
-                settings={settings}
-                setSettings={setSettings}
-                onCopyIp={handleCopyIp}
-                referees={referees}
-                onResetConnections={handleResetConnections}
-                maxReferees={maxReferees}
-            />
+            <Accordion type="single" collapsible className="w-full" value={activeAccordionItem} onValueChange={setActiveAccordionItem}>
+                <AccordionItem value="premium">
+                    <AccordionTrigger className="px-6 text-lg">
+                        <div className="flex items-center gap-3">
+                            <KeyRound className="h-5 w-5" />
+                            License & Plan
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-4">
+                        <PremiumSettings />
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="connections">
+                    <AccordionTrigger className="px-6 text-lg">
+                        <div className="flex items-center gap-3">
+                            <Wifi className="h-5 w-5" />
+                            Referee Connections
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-4">
+                        <RefereeConnectionHub
+                            settings={settings}
+                            setSettings={setSettings}
+                            onCopyIp={handleCopyIp}
+                            referees={referees}
+                            onResetConnections={handleResetConnections}
+                            maxReferees={maxReferees}
+                        />
+                    </AccordionContent>
+                </AccordionItem>
+                <AccordionItem value="help">
+                    <AccordionTrigger className="px-6 text-lg">
+                        <div className="flex items-center gap-3">
+                            <HelpCircle className="h-5 w-5" />
+                            Troubleshooting & Help
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-4">
+                        <TroubleshootingGuide />
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
           </Suspense>
-          
-          <Alert>
-            <Server className="h-4 w-4" />
-            <AlertTitle>Server Port Information</AlertTitle>
-            <AlertDescription>
-              The WebSocket server port is fixed at 8080 and cannot be changed here.
-            </AlertDescription>
-          </Alert>
-          
-          <Tabs defaultValue="rules" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="rules">WT Rules & Regulations</TabsTrigger>
-              <TabsTrigger value="help">Troubleshooting & Help</TabsTrigger>
-            </TabsList>
-            <TabsContent value="rules">
-              <Card>
-                <CardContent className="text-sm text-muted-foreground p-6">
-                  Content for the WT Rules & Regulations is currently being prepared and will be available in a future update.
-                </CardContent>
-              </Card>
-            </TabsContent>
-            <TabsContent value="help">
-                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2"><Info className="h-5 w-5" /> Connection & Troubleshooting</CardTitle>
-                      <CardDescription>
-                        Follow these steps to resolve common connection issues.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <Accordion type="single" collapsible className="w-full">
-                        <AccordionItem value="item-1">
-                          <AccordionTrigger>
-                            <div className="flex items-center gap-2"><Network className="h-4 w-4" />Step 1: Check Network & IP</div>
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-2 pl-2">
-                            <p className="text-sm text-muted-foreground">Both the server device and all referee devices **must** be on the exact same Wi-Fi network.</p>
-                            <ul className="list-disc pl-5 text-sm space-y-1">
-                              <li>Verify the Wi-Fi network name is identical on all devices.</li>
-                              <li>Enter the server's Local IP address from above into each referee app.</li>
-                              <li>On Windows, find the IP by opening Command Prompt and typing `ipconfig`. Look for the "IPv4 Address".</li>
-                              <li>On macOS, find the IP in System Settings &gt; Wi-Fi &gt; Details.</li>
-                            </ul>
-                          </AccordionContent>
-                        </AccordionItem>
-                        <AccordionItem value="item-2">
-                          <AccordionTrigger>
-                            <div className="flex items-center gap-2"><ShieldCheck className="h-4 w-4" />Step 2: Check Firewall Settings</div>
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-2 pl-2">
-                            <p className="text-sm text-muted-foreground">Firewalls can block connections. You must allow the app to accept incoming connections.</p>
-                            <Alert variant="destructive">
-                                <AlertTriangle className="h-4 w-4" />
-                                <AlertTitle>Action Required on Windows/macOS</AlertTitle>
-                                <AlertDescription>
-                                    You need to create an "inbound rule" for **Port 8080 (TCP)** in your firewall settings to allow referees to connect. If you are on a public network (like a hotel or airport), the network itself may block this connection.
-                                </AlertDescription>
-                            </Alert>
-                          </AccordionContent>
-                        </AccordionItem>
-                        <AccordionItem value="item-3">
-                          <AccordionTrigger>
-                            <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4" />Common Problems</div>
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-2 pl-2">
-                             <ul className="list-disc pl-5 text-sm space-y-1">
-                                <li>**"I entered the IP but it won't connect."** - This is almost always a firewall issue. Double-check Step 2.</li>
-                                <li>**"It worked at home but not at the venue."** - The venue's Wi-Fi may have "Client Isolation" enabled, which prevents devices from seeing each other. The best solution is to create your own Wi-Fi hotspot from a mobile phone or laptop and connect all devices to that hotspot.</li>
-                                <li>**"The app crashes or freezes."** - Ensure you are using the latest version of the server and referee apps. Restart both applications.</li>
-                             </ul>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    </CardContent>
-                  </Card>
-                </Suspense>
-            </TabsContent>
-          </Tabs>
-
-          <Button size="lg" className="w-full" onClick={handleSave}>
-            Save Settings
-          </Button>
         </CardContent>
       </Card>
     </div>
   );
 }
-
-    
