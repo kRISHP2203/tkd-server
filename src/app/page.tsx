@@ -1,12 +1,19 @@
 
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MatchManager from '@/components/app/match-manager';
 import ImmersiveModePrompt from '@/components/app/immersive-mode-prompt';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function TapScoreHubPage() {
   const [isImmersive, setIsImmersive] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleEnterImmersive = async () => {
     try {
@@ -19,12 +26,16 @@ export default function TapScoreHubPage() {
       setIsImmersive(true);
     } catch (error) {
       console.error("Failed to enter immersive mode:", error);
-      // Fallback for browsers that don't support one or both APIs
       setIsImmersive(true);
     }
   };
 
-  if (!isImmersive) {
+  if (!isClient) {
+    // Wait for client-side hydration to avoid mismatched content
+    return null; 
+  }
+
+  if (isMobile && !isImmersive) {
     return <ImmersiveModePrompt onEnter={handleEnterImmersive} />;
   }
 
