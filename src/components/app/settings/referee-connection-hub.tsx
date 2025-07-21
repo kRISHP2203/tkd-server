@@ -1,13 +1,14 @@
 
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, AlertTriangle, Users, Wifi } from 'lucide-react';
+import { Copy, AlertTriangle, Users, Wifi, ShieldAlert } from 'lucide-react';
 import type { AppSettings } from '@/app/settings/page';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export interface Referee {
     id: string;
@@ -32,6 +33,16 @@ const RefereeConnectionHubComponent = ({
     onResetConnections,
     maxReferees,
 }: RefereeConnectionHubProps) => {
+    const [isChromeOS, setIsChromeOS] = useState(false);
+
+    useEffect(() => {
+        if (typeof navigator !== 'undefined') {
+            if (/\bCrOS\b/.test(navigator.userAgent)) {
+                setIsChromeOS(true);
+            }
+        }
+    }, []);
+
     return (
         <div className="space-y-4 rounded-lg border p-4">
             <div className="flex justify-between items-center">
@@ -43,6 +54,16 @@ const RefereeConnectionHubComponent = ({
                     <span className="font-bold text-foreground">{referees.length}</span> / {maxReferees === Infinity ? 'Unlimited' : maxReferees} Connected
                 </div>
             </div>
+
+            {isChromeOS && (
+                <Alert variant="destructive">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle>ChromeOS Limitation</AlertTitle>
+                    <AlertDescription>
+                        Running the server on a Chromebook is not recommended. ChromeOS firewalls typically block connections from other devices, which will prevent referees from connecting. For best results, please run the server on a Windows or macOS device.
+                    </AlertDescription>
+                </Alert>
+            )}
             
             <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
