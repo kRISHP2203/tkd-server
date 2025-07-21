@@ -89,6 +89,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [deviceId, toast, setFreePlan]);
   
   const purchasePlan = useCallback(async (plan: Plan, amount: number) => {
+    if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID) {
+        toast({
+            title: 'Payments Not Enabled',
+            description: 'The payment gateway has not been configured by the administrator.',
+            variant: 'destructive',
+        });
+        return;
+    }
+    
     if (!deviceId) {
         toast({ title: 'Error', description: 'Device ID not available. Cannot complete purchase.', variant: 'destructive' });
         return;

@@ -4,15 +4,20 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
 import shortid from 'shortid';
-import { verifyLicense, updateLicenseOnPayment } from '@/lib/auth-service';
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
+import { updateLicenseOnPayment } from '@/lib/auth-service';
 
 export async function POST(req: Request) {
   const { amount, plan, deviceId } = await req.json();
+
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    console.error('Razorpay keys not configured in .env file');
+    return NextResponse.json({ error: 'Payment gateway is not configured.' }, { status: 500 });
+  }
+
+  const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
+  });
 
   if (!amount || !plan || !deviceId) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -47,13 +52,18 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
     const { orderId, paymentId, signature, plan, deviceId } = await req.json();
 
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      console.error('Razorpay secret key not configured in .env file');
+      return NextResponse.json({ error: 'Payment gateway is not configured.' }, { status: 500 });
+    }
+
     if (!orderId || !paymentId || !signature || !plan || !deviceId) {
         return NextResponse.json({ error: 'Missing required fields for verification' }, { status: 400 });
     }
 
     try {
         const generated_signature = require('crypto')
-            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
             .update(orderId + "|" + paymentId)
             .digest('hex');
 
