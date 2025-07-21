@@ -192,9 +192,20 @@ wss.on('connection', ws => {
                 case 'penalty':
                      if (message.source === 'judge_control') {
                          broadcastToLicense(customWs.licenseKey, message);
-                     }
+                     } else if (customWs.type === 'referee') {
+                        // This handles the score message from the referee client
+                        const signal: Signal = {
+                           refereeId: customWs.id,
+                           target: message.target,
+                           technique: message.technique || 'trunk', // Default if not provided
+                           value: message.points,
+                           timestamp: Date.now(),
+                       };
+                       signalQueue.push(signal);
+                       processSignalQueue(customWs.licenseKey);
+                    }
                     break;
-                case 'score_point':
+                case 'score_point': // Legacy or alternative, keep for now.
                      if (customWs.type !== 'referee') return;
                      const signal: Signal = {
                         refereeId: customWs.id,
