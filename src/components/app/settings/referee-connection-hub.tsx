@@ -6,7 +6,7 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, AlertTriangle, Users, Wifi, ShieldAlert } from 'lucide-react';
+import { Copy, AlertTriangle, Users, Wifi, ShieldAlert, Save } from 'lucide-react';
 import type { AppSettings } from '@/app/settings/page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -20,6 +20,7 @@ interface RefereeConnectionHubProps {
     settings: AppSettings;
     setSettings: React.Dispatch<React.SetStateAction<AppSettings>>;
     onCopyIp: () => void;
+    onSaveSettings: () => void;
     referees: Referee[];
     onResetConnections: () => void;
     maxReferees: number;
@@ -29,6 +30,7 @@ const RefereeConnectionHubComponent = ({
     settings,
     setSettings,
     onCopyIp,
+    onSaveSettings,
     referees,
     onResetConnections,
     maxReferees,
@@ -99,8 +101,12 @@ const RefereeConnectionHubComponent = ({
                 </div>
             </div>
 
-            <Separator />
+            <Button onClick={onSaveSettings} className="w-full">
+                <Save className="mr-2 h-4 w-4" /> Save Connection Settings
+            </Button>
             
+            <Separator />
+
             <div className="space-y-2 min-h-[100px]">
                  <h4 className="font-medium text-sm flex items-center gap-2"><Users className="h-4 w-4" /> Active Connections</h4>
                 {referees.length > 0 ? (

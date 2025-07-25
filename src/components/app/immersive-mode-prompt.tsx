@@ -1,33 +1,15 @@
 
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Smartphone, Expand } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ImmersiveModePromptProps {
   onEnter: () => void;
 }
 
 export default function ImmersiveModePrompt({ onEnter }: ImmersiveModePromptProps) {
-  const isMobile = useIsMobile();
-
-  useEffect(() => {
-    // On non-mobile devices, we don't need the prompt.
-    // We enter the "immersive" state directly, which just loads the app.
-    if (isMobile === false) { // Check for explicit false to avoid running on initial undefined state
-      onEnter();
-    }
-  }, [isMobile, onEnter]);
-
-  // Don't render anything until we know if it's mobile or not
-  if (isMobile === undefined) {
-    return null;
-  }
-
-  // Only show the prompt on mobile devices
-  if (isMobile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 text-center">
         <div className="max-w-md">
@@ -43,8 +25,4 @@ export default function ImmersiveModePrompt({ onEnter }: ImmersiveModePromptProp
         </div>
       </div>
     );
-  }
-
-  // This will be null on desktop after the useEffect runs, preventing a flash of the prompt
-  return null;
 }

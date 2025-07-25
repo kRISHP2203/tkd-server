@@ -4,10 +4,8 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Server, Wifi, X, AlertTriangle, ShieldCheck, Network, Info, KeyRound, HelpCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Wifi, X, KeyRound, HelpCircle } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { Referee } from '@/components/app/settings/referee-connection-hub';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -66,6 +64,23 @@ export default function SettingsPage() {
       console.error("Could not load app settings", e);
     }
   }, []);
+  
+  const handleSaveSettings = () => {
+    try {
+        localStorage.setItem('appSettings', JSON.stringify(settings));
+        toast({
+            title: 'Settings Saved',
+            description: 'Your connection settings have been saved.',
+        });
+    } catch(e) {
+        toast({
+            title: 'Error Saving Settings',
+            description: 'Could not save settings to local storage.',
+            variant: 'destructive',
+        });
+        console.error("Could not save settings", e);
+    }
+  };
 
   useEffect(() => {
     const connect = () => {
@@ -186,6 +201,7 @@ export default function SettingsPage() {
                             settings={settings}
                             setSettings={setSettings}
                             onCopyIp={handleCopyIp}
+                            onSaveSettings={handleSaveSettings}
                             referees={referees}
                             onResetConnections={handleResetConnections}
                             maxReferees={maxReferees}
