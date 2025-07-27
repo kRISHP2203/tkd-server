@@ -79,7 +79,7 @@ export function useMatchEngine() {
             return;
         }
 
-        ws = new WebSocket('ws://localhost:8080');
+        ws = new WebSocket('ws://localhost:8000');
 
         ws.onopen = () => {
             console.log('✅ UI connected to WebSocket server');

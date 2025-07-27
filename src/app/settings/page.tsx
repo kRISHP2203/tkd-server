@@ -19,7 +19,7 @@ export type ConnectionMode = 'websocket' | 'udp';
 
 export interface AppSettings {
   connectionMode: ConnectionMode;
-  readonly serverPort: 8080;
+  readonly serverPort: 8000;
   connectionTimeout: number;
   autoReconnect: boolean;
   broadcastScore: boolean;
@@ -28,7 +28,7 @@ export interface AppSettings {
 
 const defaultSettings: AppSettings = {
   connectionMode: 'websocket',
-  serverPort: 8080,
+  serverPort: 8000,
   connectionTimeout: 5000,
   autoReconnect: true,
   broadcastScore: false,
@@ -58,7 +58,7 @@ export default function SettingsPage() {
       const savedSettings = localStorage.getItem('appSettings');
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
-        setSettings({ ...defaultSettings, ...parsed, serverPort: 8080 });
+        setSettings({ ...defaultSettings, ...parsed, serverPort: 8000 });
       }
     } catch (e) {
       console.error("Could not load app settings", e);
@@ -88,7 +88,7 @@ export default function SettingsPage() {
         return;
       }
       
-      ws = new WebSocket('ws://localhost:8080');
+      ws = new WebSocket('ws://localhost:8000');
 
       ws.onopen = () => {
         console.log('✅ Settings page connected to WebSocket server');

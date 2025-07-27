@@ -91,7 +91,7 @@ const RefereeConnectionHubComponent = ({
                         <Input 
                             id="server-port" 
                             type="text" 
-                            value="8080"
+                            value="8000"
                             readOnly
                         />
                     </div>

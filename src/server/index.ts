@@ -21,14 +21,14 @@ interface Signal {
   timestamp: number;
 }
 
-const wss = new WebSocketServer({ port: 8080 });
+const wss = new WebSocketServer({ port: 8000 });
 
 // State Management
 let signalQueue: Signal[] = [];
 const processedSignatures: Set<string> = new Set();
 const clientData = new Map<string, { licenseKey?: string | null, deviceId?: string }>();
 
-console.log('✅ WebSocket server started on ws://localhost:8080');
+console.log('✅ WebSocket server started on ws://localhost:8000');
 
 // Helper Functions
 const broadcastToLicense = (licenseKey: string | null, data: any) => {
