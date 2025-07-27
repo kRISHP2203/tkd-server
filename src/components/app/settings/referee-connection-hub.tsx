@@ -6,9 +6,12 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, AlertTriangle, Users, Wifi, ShieldAlert, Save } from 'lucide-react';
+import { Copy, AlertTriangle, Users, Wifi, ShieldAlert, Save, QrCode } from 'lucide-react';
 import type { AppSettings } from '@/app/settings/page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import QRCode from 'qrcode.react';
+import { useAuth } from '@/hooks/use-auth';
 
 export interface Referee {
     id: string;
@@ -36,6 +39,7 @@ const RefereeConnectionHubComponent = ({
     maxReferees,
 }: RefereeConnectionHubProps) => {
     const [isChromeOS, setIsChromeOS] = useState(false);
+    const { licenseKey } = useAuth();
 
     useEffect(() => {
         if (typeof navigator !== 'undefined') {
@@ -44,12 +48,18 @@ const RefereeConnectionHubComponent = ({
             }
         }
     }, []);
+    
+    const qrCodeValue = JSON.stringify({
+        ip: settings.serverIp,
+        port: settings.serverPort,
+        license: licenseKey || 'free',
+    });
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                  <p className="text-sm text-muted-foreground">
-                    Enter this device's local IP address into the referee apps to connect.
+                    Enter this device's IP, or scan the QR code to connect.
                 </p>
                 <div className="text-sm font-medium text-muted-foreground">
                     <span className="font-bold text-foreground">{referees.length}</span> / {maxReferees === Infinity ? 'Unlimited' : maxReferees} Connected
@@ -101,9 +111,31 @@ const RefereeConnectionHubComponent = ({
                 </div>
             </div>
 
-            <Button onClick={onSaveSettings} className="w-full">
-                <Save className="mr-2 h-4 w-4" /> Save Connection Settings
-            </Button>
+            <div className="grid grid-cols-2 gap-4">
+                <Button onClick={onSaveSettings}>
+                    <Save className="mr-2 h-4 w-4" /> Save IP
+                </Button>
+                
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" disabled={!settings.serverIp || !licenseKey}>
+                             <QrCode className="mr-2 h-4 w-4" /> Scan to Connect
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-xs">
+                        <DialogHeader>
+                            <DialogTitle>Scan to Connect Referee</DialogTitle>
+                            <DialogDescription>
+                                Scan this code with the TKD WiFi Referee app. Ensure you are on the same WiFi network.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center justify-center p-4 bg-white rounded-md">
+                             <QRCode value={qrCodeValue} size={200} />
+                        </div>
+                         <p className="text-xs text-muted-foreground text-center font-mono break-all">{settings.serverIp}:{settings.serverPort}</p>
+                    </DialogContent>
+                </Dialog>
+            </div>
             
             <Separator />
 
