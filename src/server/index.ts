@@ -1,7 +1,10 @@
 
 import { WebSocketServer, WebSocket } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { verifyLicense, getPlanLimits, removeDeviceFromLicense } from '@/lib/auth-service';
+import { verifyLicense, getPlanLimits } from '@/lib/auth-service';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const ADMIN_LICENSE_KEY = 'admin-master-key-unlimited';
 
@@ -9,7 +12,6 @@ interface CustomWebSocket extends WebSocket {
   id: string;
   isAlive: boolean;
   type: 'referee' | 'ui' | 'unknown';
-  licenseKey?: string | null;
   deviceId?: string;
 }
 
@@ -23,16 +25,43 @@ interface Signal {
 
 const wss = new WebSocketServer({ port: 8000 });
 
-// State Management
+// --- Server State Management ---
 let signalQueue: Signal[] = [];
 const processedSignatures: Set<string> = new Set();
-const clientData = new Map<string, { deviceId?: string }>();
-let serverLicenseKey: string | null = null;
 let serverPlan: 'free' | 'basic' | 'elite' = 'free';
+let maxRefereesForPlan: number = 1;
 
+// --- Server Initialization ---
 console.log('✅ WebSocket server started on ws://localhost:8000');
 
-// Helper Functions
+// Load license and set plan limits at startup
+const initializeServerState = async () => {
+    const licenseKey = process.env.LICENSE_KEY || null;
+    console.log(`🔑 Initializing server with license key from .env: ${licenseKey ? `${licenseKey.substring(0, 8)}...` : 'None'}`);
+    
+    if (licenseKey) {
+        const licenseData = await verifyLicense(licenseKey);
+        if (licenseData) {
+            serverPlan = licenseData.plan;
+            const limits = await getPlanLimits(serverPlan);
+            maxRefereesForPlan = limits.maxReferees;
+            console.log(`✅ Server plan set to '${serverPlan}'. Max referees: ${maxRefereesForPlan}.`);
+        } else {
+            console.warn(`⚠️ Invalid license key found in .env. Defaulting to 'free' plan.`);
+            serverPlan = 'free';
+            maxRefereesForPlan = 1;
+        }
+    } else {
+        console.log(`ℹ️ No license key in .env. Server running on 'free' plan.`);
+        serverPlan = 'free';
+        maxRefereesForPlan = 1;
+    }
+};
+
+initializeServerState();
+
+
+// --- Helper Functions ---
 const broadcast = (data: any) => {
     wss.clients.forEach(client => {
         if (client.readyState === WebSocket.OPEN) {
@@ -95,7 +124,7 @@ const processSignalQueue = () => {
             });
 
             processedSignatures.add(signature);
-            setTimeout(() => processedSignatures.delete(signature), 5000); // Prevent re-triggering
+            setTimeout(() => processedSignatures.delete(signature), 5000);
 
             signalQueue = signalQueue.filter(s => {
                 const sSignature = `${s.target}:${s.technique}:${s.value}`;
@@ -116,7 +145,7 @@ const getRefereeList = () => {
     return referees;
 };
 
-// WebSocket Server Logic
+// --- WebSocket Server Logic ---
 wss.on('connection', ws => {
     const customWs = ws as CustomWebSocket;
     customWs.id = uuidv4();
@@ -136,11 +165,8 @@ wss.on('connection', ws => {
             if (action === 'register_ui') {
                 customWs.type = 'ui';
                 customWs.deviceId = deviceId;
-                serverLicenseKey = message.licenseKey;
-                const licenseData = await verifyLicense(serverLicenseKey);
-                serverPlan = licenseData ? licenseData.plan : 'free';
-                console.log(`🖥️ UI registered for license ${String(serverLicenseKey).substring(0,8)} with plan: ${serverPlan}`);
-                broadcast({ action: 'referee_list', referees: getRefereeList() });
+                console.log(`🖥️ UI client registered: ${deviceId}`);
+                ws.send(JSON.stringify({ action: 'referee_list', referees: getRefereeList() }));
                 return;
             }
 
@@ -148,18 +174,15 @@ wss.on('connection', ws => {
                 customWs.type = 'referee';
                 customWs.deviceId = deviceId;
                 
-                if (serverLicenseKey !== ADMIN_LICENSE_KEY) {
-                    const limits = await getPlanLimits(serverPlan);
-                    const currentReferees = getRefereeCount();
-                    
-                    if (currentReferees >= limits.maxReferees) {
-                        console.log(`❌ Referee limit reached for plan ${serverPlan}. Limit: ${limits.maxReferees}`);
-                        ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees, plan: serverPlan }));
-                        return ws.terminate();
-                    }
+                const currentReferees = getRefereeCount();
+                
+                if (currentReferees >= maxRefereesForPlan) {
+                    console.log(`❌ Referee limit reached for plan '${serverPlan}'. Limit: ${maxRefereesForPlan}`);
+                    ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: maxRefereesForPlan, plan: serverPlan }));
+                    return ws.terminate();
                 }
                 
-                console.log(`🤝 Referee ${customWs.id.substring(0,8)} registered.`);
+                console.log(`🤝 Referee ${customWs.id.substring(0,8)} registered. (${currentReferees + 1}/${maxRefereesForPlan})`);
                 broadcast({ action: 'referee_list', referees: getRefereeList() });
                 return;
             }
@@ -167,7 +190,7 @@ wss.on('connection', ws => {
             // Actions for registered clients
             switch (action) {
                 case 'get_referees':
-                    broadcast({ action: 'referee_list', referees: getRefereeList() });
+                    ws.send(JSON.stringify({ action: 'referee_list', referees: getRefereeList() }));
                     break;
                 case 'reset_connections':
                     wss.clients.forEach(client => {
@@ -205,7 +228,7 @@ wss.on('connection', ws => {
     });
 });
 
-// Health check and cleanup interval
+// --- Health Check and Cleanup ---
 const interval = setInterval(() => {
     wss.clients.forEach(client => {
         const ws = client as CustomWebSocket;
@@ -222,7 +245,6 @@ const interval = setInterval(() => {
     signalQueue = signalQueue.filter(s => s.timestamp >= now - 5000);
     if (beforeCount > 0 && signalQueue.length === 0) {
         processedSignatures.clear();
-        console.log('🚮 Cleared processed signal signatures cache.');
     }
 }, 5000);
 

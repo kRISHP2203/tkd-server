@@ -55,7 +55,7 @@ export function useMatchEngine() {
     const synth = useRef<any>(null);
     const isPlaying = useRef(false);
     const { toast } = useToast();
-    const { licenseKey, deviceId } = useAuth();
+    const { deviceId } = useAuth();
   
     useEffect(() => {
       try {
@@ -138,7 +138,7 @@ export function useMatchEngine() {
         ws.onopen = () => {
             console.log('✅ UI connected to WebSocket server');
             if (ws?.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ licenseKey, deviceId, action: 'register_ui' }));
+              ws.send(JSON.stringify({ deviceId, action: 'register_ui' }));
             }
         };
 
@@ -168,7 +168,7 @@ export function useMatchEngine() {
       return () => {
           ws?.close();
       }
-    }, [licenseKey, deviceId, handleJudgeAction]);
+    }, [deviceId, handleJudgeAction]);
 
     const handleSettingsSave = (newSettings: GameSettings) => {
       setSettings(newSettings);

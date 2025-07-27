@@ -42,7 +42,7 @@ export default function TroubleshootingGuide() {
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle>Action Required on Windows/macOS</AlertTitle>
                         <AlertDescription>
-                            You need to create an "inbound rule" for **Port 8080 (TCP)** in your firewall settings to allow referees to connect. If you are on a public network (like a hotel or airport), the network itself may block this connection.
+                            You need to create an "inbound rule" for **Port 8000 (TCP)** in your firewall settings to allow referees to connect. If you are on a public network (like a hotel or airport), the network itself may block this connection.
                         </AlertDescription>
                     </Alert>
                     </AccordionContent>
