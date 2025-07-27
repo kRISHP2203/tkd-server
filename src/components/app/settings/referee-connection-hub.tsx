@@ -11,7 +11,6 @@ import type { AppSettings } from '@/app/settings/page';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import QRCode from 'qrcode.react';
-import { useAuth } from '@/hooks/use-auth';
 
 export interface Referee {
     id: string;
@@ -39,7 +38,6 @@ const RefereeConnectionHubComponent = ({
     maxReferees,
 }: RefereeConnectionHubProps) => {
     const [isChromeOS, setIsChromeOS] = useState(false);
-    const { licenseKey } = useAuth();
 
     useEffect(() => {
         if (typeof navigator !== 'undefined') {
@@ -52,7 +50,6 @@ const RefereeConnectionHubComponent = ({
     const qrCodeValue = JSON.stringify({
         ip: settings.serverIp,
         port: settings.serverPort,
-        license: licenseKey || 'free',
     });
 
     return (
@@ -118,7 +115,7 @@ const RefereeConnectionHubComponent = ({
                 
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="outline" disabled={!settings.serverIp || !licenseKey}>
+                        <Button variant="outline" disabled={!settings.serverIp}>
                              <QrCode className="mr-2 h-4 w-4" /> Scan to Connect
                         </Button>
                     </DialogTrigger>

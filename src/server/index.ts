@@ -26,45 +26,42 @@ const wss = new WebSocketServer({ port: 8000 });
 // State Management
 let signalQueue: Signal[] = [];
 const processedSignatures: Set<string> = new Set();
-const clientData = new Map<string, { licenseKey?: string | null, deviceId?: string }>();
+const clientData = new Map<string, { deviceId?: string }>();
+let serverLicenseKey: string | null = null;
+let serverPlan: 'free' | 'basic' | 'elite' = 'free';
 
 console.log('✅ WebSocket server started on ws://localhost:8000');
 
 // Helper Functions
-const broadcastToLicense = (licenseKey: string | null, data: any) => {
-    const key = licenseKey || 'free';
+const broadcast = (data: any) => {
     wss.clients.forEach(client => {
-        const ws = client as CustomWebSocket;
-        const clientKey = ws.licenseKey || 'free';
-        if (clientKey === key && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(data));
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data));
         }
     });
 };
 
-const getRefereeCountForLicense = (licenseKey: string | null): number => {
+const getRefereeCount = (): number => {
     let count = 0;
-    const key = licenseKey || 'free';
     wss.clients.forEach(client => {
         const ws = client as CustomWebSocket;
-        const clientKey = ws.licenseKey || 'free';
-        if (clientKey === key && ws.type === 'referee') {
+        if (ws.type === 'referee') {
             count++;
         }
     });
     return count;
 };
 
-const getRequiredConfirmations = (licenseKey: string | null): number => {
-    const refereeCount = getRefereeCountForLicense(licenseKey);
+const getRequiredConfirmations = (): number => {
+    const refereeCount = getRefereeCount();
     if (refereeCount <= 1) return 1;
     if (refereeCount === 2) return 2;
     if (refereeCount >= 4) return 3;
     return 2; // Default for 3 referees
 };
 
-const processSignalQueue = (licenseKey: string | null) => {
-    const requiredConfirmations = getRequiredConfirmations(licenseKey);
+const processSignalQueue = () => {
+    const requiredConfirmations = getRequiredConfirmations();
     const now = Date.now();
     const fiveSecondsAgo = now - 5000;
 
@@ -83,24 +80,22 @@ const processSignalQueue = (licenseKey: string | null) => {
     }
 
     groupedSignals.forEach((signals, signature) => {
-        const licenseIdentifier = licenseKey || 'free';
-        const fullSignature = `${licenseIdentifier}:${signature}`;
-        if (processedSignatures.has(fullSignature)) {
+        if (processedSignatures.has(signature)) {
             return;
         }
 
         if (signals.length >= requiredConfirmations) {
             const confirmedSignal = signals[0];
-            console.log(`✅ Valid point confirmed for ${licenseIdentifier}. Required: ${requiredConfirmations}, Got: ${signals.length}`);
+            console.log(`✅ Valid point confirmed. Required: ${requiredConfirmations}, Got: ${signals.length}`);
 
-            broadcastToLicense(licenseKey, {
+            broadcast({
                 action: 'score',
                 team: confirmedSignal.target,
                 points: confirmedSignal.value,
             });
 
-            processedSignatures.add(fullSignature);
-            setTimeout(() => processedSignatures.delete(fullSignature), 5000); // Prevent re-triggering
+            processedSignatures.add(signature);
+            setTimeout(() => processedSignatures.delete(signature), 5000); // Prevent re-triggering
 
             signalQueue = signalQueue.filter(s => {
                 const sSignature = `${s.target}:${s.technique}:${s.value}`;
@@ -110,13 +105,11 @@ const processSignalQueue = (licenseKey: string | null) => {
     });
 };
 
-const getRefereeListForLicense = (licenseKey: string | null) => {
+const getRefereeList = () => {
     const referees: { id: string, status: 'connected' | 'disconnected', lastSeen: string }[] = [];
-    const key = licenseKey || 'free';
     wss.clients.forEach(client => {
         const ws = client as CustomWebSocket;
-        const clientKey = ws.licenseKey || 'free';
-        if (clientKey === key && ws.type === 'referee') {
+        if (ws.type === 'referee') {
             referees.push({ id: ws.id, status: 'connected', lastSeen: new Date().toISOString() });
         }
     });
@@ -129,7 +122,6 @@ wss.on('connection', ws => {
     customWs.id = uuidv4();
     customWs.isAlive = true;
     customWs.type = 'unknown';
-    customWs.licenseKey = null;
 
     console.log(`🔌 New client connected: ${customWs.id}`);
 
@@ -139,51 +131,48 @@ wss.on('connection', ws => {
     ws.on('message', async (data: Buffer) => {
         try {
             const message = JSON.parse(data.toString());
-            const { licenseKey, deviceId, action } = message;
+            const { deviceId, action } = message;
 
-            // Registration for all clients
-            if (action === 'register_ui' || action === 'register_referee') {
+            if (action === 'register_ui') {
+                customWs.type = 'ui';
                 customWs.deviceId = deviceId;
-                let plan: 'free' | 'basic' | 'elite' = 'free';
+                serverLicenseKey = message.licenseKey;
+                const licenseData = await verifyLicense(serverLicenseKey);
+                serverPlan = licenseData ? licenseData.plan : 'free';
+                console.log(`🖥️ UI registered for license ${String(serverLicenseKey).substring(0,8)} with plan: ${serverPlan}`);
+                broadcast({ action: 'referee_list', referees: getRefereeList() });
+                return;
+            }
 
-                if (licenseKey) {
-                    const licenseData = await verifyLicense(licenseKey);
-                    if (licenseData) {
-                        customWs.licenseKey = licenseKey;
-                        plan = licenseData.plan;
+            if (action === 'register_referee') {
+                customWs.type = 'referee';
+                customWs.deviceId = deviceId;
+                
+                if (serverLicenseKey !== ADMIN_LICENSE_KEY) {
+                    const limits = await getPlanLimits(serverPlan);
+                    const currentReferees = getRefereeCount();
+                    
+                    if (currentReferees >= limits.maxReferees) {
+                        console.log(`❌ Referee limit reached for plan ${serverPlan}. Limit: ${limits.maxReferees}`);
+                        ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees, plan: serverPlan }));
+                        return ws.terminate();
                     }
                 }
                 
-                clientData.set(customWs.id, { licenseKey: customWs.licenseKey, deviceId });
-                
-                if (action === 'register_referee') {
-                    // Admin key bypasses referee limits
-                    if (customWs.licenseKey !== ADMIN_LICENSE_KEY) {
-                        const limits = await getPlanLimits(plan);
-                        const currentReferees = getRefereeCountForLicense(customWs.licenseKey);
-                        
-                        if (currentReferees >= limits.maxReferees) {
-                            console.log(`❌ Referee limit reached for ${customWs.licenseKey || 'free'}. Limit: ${limits.maxReferees}`);
-                            ws.send(JSON.stringify({ error: 'MAX_REFEREES_REACHED', limit: limits.maxReferees, plan: plan }));
-                            return ws.terminate();
-                        }
-                    }
-                }
-                customWs.type = action === 'register_ui' ? 'ui' : 'referee';
-                console.log(`🤝 Client ${customWs.id.substring(0,8)} registered to license ${String(customWs.licenseKey).substring(0,8)} as ${customWs.type}`);
-                broadcastToLicense(customWs.licenseKey, { action: 'referee_list', referees: getRefereeListForLicense(customWs.licenseKey) });
+                console.log(`🤝 Referee ${customWs.id.substring(0,8)} registered.`);
+                broadcast({ action: 'referee_list', referees: getRefereeList() });
                 return;
             }
 
             // Actions for registered clients
             switch (action) {
                 case 'get_referees':
-                    broadcastToLicense(customWs.licenseKey, { action: 'referee_list', referees: getRefereeListForLicense(customWs.licenseKey) });
+                    broadcast({ action: 'referee_list', referees: getRefereeList() });
                     break;
                 case 'reset_connections':
                     wss.clients.forEach(client => {
                         const c = client as CustomWebSocket;
-                        if (c.licenseKey === customWs.licenseKey && c.type === 'referee') {
+                        if (c.type === 'referee') {
                            c.terminate();
                         }
                     });
@@ -191,31 +180,18 @@ wss.on('connection', ws => {
                 case 'score':
                 case 'penalty':
                      if (message.source === 'judge_control') {
-                         broadcastToLicense(customWs.licenseKey, message);
+                         broadcast(message);
                      } else if (customWs.type === 'referee') {
-                        // This handles the score message from the referee client
                         const signal: Signal = {
                            refereeId: customWs.id,
                            target: message.target,
-                           technique: message.technique || 'trunk', // Default if not provided
+                           technique: message.technique || 'trunk',
                            value: message.points,
                            timestamp: Date.now(),
                        };
                        signalQueue.push(signal);
-                       processSignalQueue(customWs.licenseKey);
+                       processSignalQueue();
                     }
-                    break;
-                case 'score_point': // Legacy or alternative, keep for now.
-                     if (customWs.type !== 'referee') return;
-                     const signal: Signal = {
-                        refereeId: customWs.id,
-                        target: message.target,
-                        technique: message.technique,
-                        value: message.value,
-                        timestamp: Date.now(),
-                    };
-                    signalQueue.push(signal);
-                    processSignalQueue(customWs.licenseKey);
                     break;
             }
         } catch (e) {
@@ -224,16 +200,8 @@ wss.on('connection', ws => {
     });
 
     ws.on('close', () => {
-        const clientInfo = clientData.get(customWs.id);
         console.log(`🔌 Client disconnected: ${customWs.id}`);
-        if (clientInfo) {
-            broadcastToLicense(clientInfo.licenseKey, { action: 'referee_list', referees: getRefereeListForLicense(clientInfo.licenseKey) });
-            // In a real app, you might want to delay this to handle brief disconnects
-            // if (clientInfo.licenseKey && clientInfo.deviceId) {
-            //     removeDeviceFromLicense(clientInfo.licenseKey, clientInfo.deviceId);
-            // }
-        }
-        clientData.delete(customWs.id);
+        broadcast({ action: 'referee_list', referees: getRefereeList() });
     });
 });
 
@@ -252,8 +220,6 @@ const interval = setInterval(() => {
     const now = Date.now();
     const beforeCount = signalQueue.length;
     signalQueue = signalQueue.filter(s => s.timestamp >= now - 5000);
-    // If the queue was populated but is now empty, clear the processed signatures cache.
-    // This prevents memory bloat between matches.
     if (beforeCount > 0 && signalQueue.length === 0) {
         processedSignatures.clear();
         console.log('🚮 Cleared processed signal signatures cache.');

@@ -73,6 +73,60 @@ export function useMatchEngine() {
       }
     }, [matchState]);
   
+    const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty', fromRemote: boolean = false) => {
+      if (matchState === 'finished' || matchState === 'between_rounds') return;
+      
+      if (!fromRemote && ws && ws.readyState === WebSocket.OPEN) {
+          const message = {
+              action: type,
+              team,
+              points,
+              source: 'judge_control'
+          };
+          ws.send(JSON.stringify(message));
+      }
+  
+      const action: Action = { team, points, type };
+      
+      if (type === 'score') {
+        if (team === 'red') {
+          setRedScore(s => Math.max(0, s + points));
+        } else {
+          setBlueScore(s => Math.max(0, s + points));
+        }
+      } else if (type === 'penalty') {
+          if (team === 'red') {
+              const newPenalties = redPenalties + points;
+              if (newPenalties < 0) return;
+              setRedPenalties(newPenalties);
+
+              if (points > 0) setBlueScore(s => s + 1);
+              else setBlueScore(s => Math.max(0, s - 1));
+
+              if (newPenalties >= settings.maxGamJeom) {
+                  handleEndRound('penalties', 'red');
+                  return; 
+              }
+          } else {
+              const newPenalties = bluePenalties + points;
+              if (newPenalties < 0) return;
+              setBluePenalties(newPenalties);
+              
+              if (points > 0) setRedScore(s => s + 1);
+              else setRedScore(s => Math.max(0, s - 1));
+
+              if (newPenalties >= settings.maxGamJeom) {
+                  handleEndRound('penalties', 'blue');
+                  return; 
+              }
+          }
+      }
+  
+      playSound('C4');
+      setHistory(h => [...h, action]);
+  
+    }, [matchState, redPenalties, bluePenalties, settings.maxGamJeom]);
+
     useEffect(() => {
       const connectWebSocket = () => {
         if (ws && ws.readyState < 2) {
@@ -114,7 +168,7 @@ export function useMatchEngine() {
       return () => {
           ws?.close();
       }
-    }, [licenseKey, deviceId]);
+    }, [licenseKey, deviceId, handleJudgeAction]);
 
     const handleSettingsSave = (newSettings: GameSettings) => {
       setSettings(newSettings);
@@ -315,60 +369,6 @@ export function useMatchEngine() {
         settings.totalRounds, redWins, blueWins, playSound, handleEndMatch, currentRound
     ]);
     
-    const handleJudgeAction = useCallback((team: 'red' | 'blue', points: number, type: 'score' | 'penalty', fromRemote: boolean = false) => {
-      if (matchState === 'finished' || matchState === 'between_rounds') return;
-      
-      if (!fromRemote && ws && ws.readyState === WebSocket.OPEN) {
-          const message = {
-              action: type,
-              team,
-              points,
-              source: 'judge_control'
-          };
-          ws.send(JSON.stringify(message));
-      }
-  
-      const action: Action = { team, points, type };
-      
-      if (type === 'score') {
-        if (team === 'red') {
-          setRedScore(s => Math.max(0, s + points));
-        } else {
-          setBlueScore(s => Math.max(0, s + points));
-        }
-      } else if (type === 'penalty') {
-          if (team === 'red') {
-              const newPenalties = redPenalties + points;
-              if (newPenalties < 0) return;
-              setRedPenalties(newPenalties);
-
-              if (points > 0) setBlueScore(s => s + 1);
-              else setBlueScore(s => Math.max(0, s - 1));
-
-              if (newPenalties >= settings.maxGamJeom) {
-                  handleEndRound('penalties', 'red');
-                  return; 
-              }
-          } else {
-              const newPenalties = bluePenalties + points;
-              if (newPenalties < 0) return;
-              setBluePenalties(newPenalties);
-              
-              if (points > 0) setRedScore(s => s + 1);
-              else setRedScore(s => Math.max(0, s - 1));
-
-              if (newPenalties >= settings.maxGamJeom) {
-                  handleEndRound('penalties', 'blue');
-                  return; 
-              }
-          }
-      }
-  
-      playSound('C4');
-      setHistory(h => [...h, action]);
-  
-    }, [matchState, playSound, settings.maxGamJeom, handleEndRound, redPenalties, bluePenalties]);
-  
     useEffect(() => {
       if (isTimerRunning && matchState === 'running') {
         if (Math.abs(redScore - blueScore) >= settings.leadPoints) {

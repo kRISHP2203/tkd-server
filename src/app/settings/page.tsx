@@ -93,7 +93,7 @@ export default function SettingsPage() {
       ws.onopen = () => {
         console.log('✅ Settings page connected to WebSocket server');
         if (ws?.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ action: 'get_referees', licenseKey, deviceId }));
+          ws.send(JSON.stringify({ action: 'get_referees' }));
         }
       };
 
@@ -105,7 +105,7 @@ export default function SettingsPage() {
           } else if (message.error === 'MAX_REFEREES_REACHED') {
             toast({
               title: "Referee Limit Reached",
-              description: `Your '${plan}' plan only allows for ${message.limit} referees.`,
+              description: `Your '${message.plan}' plan only allows for ${message.limit} referees.`,
               variant: 'destructive'
             });
           }
@@ -129,7 +129,7 @@ export default function SettingsPage() {
     return () => {
       ws?.close();
     };
-  }, [licenseKey, deviceId, plan, toast]);
+  }, [plan, toast]);
 
 
   const handleCopyIp = () => {
@@ -150,7 +150,7 @@ export default function SettingsPage() {
   
   const handleResetConnections = () => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({ action: 'reset_connections', licenseKey }));
+        ws.send(JSON.stringify({ action: 'reset_connections' }));
     }
     console.log('Resetting all referee connections...');
     toast({
