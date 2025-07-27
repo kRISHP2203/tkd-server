@@ -155,7 +155,7 @@ export function useMatchEngine() {
 
         ws.onclose = () => {
             console.log('🔌 UI disconnected from WebSocket server');
-            setTimeout(connectWebSocket, 3000);
+            setTimeout(connectWebSocket, 5000); // Adjusted reconnect interval
         };
 
         ws.onerror = (error) => {

@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { verifyLicense, getPlanLimits } from '@/lib/auth-service';
 import dotenv from 'dotenv';
 
+dotenv.config({ path: '.env.local' });
 dotenv.config();
 
 const ADMIN_LICENSE_KEY = 'admin-master-key-unlimited';
@@ -37,7 +38,6 @@ console.log('✅ WebSocket server started on ws://localhost:8000');
 // Load license and set plan limits at startup
 const initializeServerState = async () => {
     const licenseKey = process.env.LICENSE_KEY || null;
-    console.log(`🔑 Initializing server with license key from .env: ${licenseKey ? `${licenseKey.substring(0, 8)}...` : 'None'}`);
     
     if (licenseKey) {
         const licenseData = await verifyLicense(licenseKey);
@@ -246,7 +246,7 @@ const interval = setInterval(() => {
     if (beforeCount > 0 && signalQueue.length === 0) {
         processedSignatures.clear();
     }
-}, 5000);
+}, 30000); // Increased interval to 30 seconds
 
 wss.on('close', () => {
     clearInterval(interval);

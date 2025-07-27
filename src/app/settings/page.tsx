@@ -116,7 +116,7 @@ export default function SettingsPage() {
 
       ws.onclose = () => {
         console.log('🔌 Settings page disconnected from WebSocket server');
-        setTimeout(connect, 3000);
+        setTimeout(connect, 5000); // Adjusted reconnect interval
       };
 
       ws.onerror = () => {
